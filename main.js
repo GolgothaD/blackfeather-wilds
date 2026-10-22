@@ -8,9 +8,9 @@ const isTouch=('ontouchstart' in window)||navigator.maxTouchPoints>0;
 // ---------- settings
 const SET=Object.assign({gfx:'auto',stick:'L',hand:'left',invert:false,vib:true,sound:true,sens:1,autoQ:null},JSON.parse(localStorage.getItem('bfw-settings')||'{}'));
 function saveSet(){localStorage.setItem('bfw-settings',JSON.stringify(SET))}
-const PRESETS={low:{pr:.75,shadows:0,seg:128,trees:.42,grass:0,fog:.0042,view:430,aa:false,rain:350},
- med:{pr:1.25,shadows:1024,seg:180,trees:.7,grass:1,fog:.003,view:620,aa:false,rain:800},
- high:{pr:2,shadows:2048,seg:250,trees:1,grass:1,fog:.0024,view:900,aa:true,rain:1500}};
+const PRESETS={low:{pr:.75,shadows:0,seg:128,trees:.42,grass:0,gfield:0,clouds:0,life:.45,bloom:0,fog:.0042,view:430,aa:false,rain:350},
+ med:{pr:1.25,shadows:1024,seg:180,trees:.7,grass:1,gfield:9000,clouds:1,life:.75,bloom:0,fog:.003,view:620,aa:false,rain:800},
+ high:{pr:2,shadows:2048,seg:250,trees:1,grass:1,gfield:22000,clouds:2,life:1,bloom:1,fog:.0024,view:900,aa:true,rain:1500}};
 function presetName(){return SET.gfx==='auto'?(SET.autoQ||(isTouch?'med':'high')):SET.gfx}
 let Q=PRESETS[presetName()];
 // ---------- renderer / scene
@@ -18,7 +18,7 @@ const canvas=$('#c');
 const renderer=new THREE.WebGLRenderer({canvas,antialias:Q.aa||!isTouch,powerPreference:'high-performance'});
 renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1;renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-const scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x9fb4c4,Q.fog);
+const scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x9fb8d2,Q.fog);
 const camera=new THREE.PerspectiveCamera(62,1,.1,5000);
 const sky=W.makeSky(scene);
 const sun=new THREE.DirectionalLight(0xffffff,2.5);sun.shadow.bias=-.0004;sun.shadow.normalBias=.04;scene.add(sun,sun.target);
@@ -27,7 +27,7 @@ const flash=new THREE.AmbientLight(0xcfd8ff,0);scene.add(flash);
 function applyQuality(){Q=PRESETS[presetName()];renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,Q.pr));
  renderer.shadowMap.enabled=!!Q.shadows;sun.castShadow=!!Q.shadows;if(Q.shadows){sun.shadow.mapSize.set(Q.shadows,Q.shadows);if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null}
   const c=sun.shadow.camera;c.left=c.bottom=-70;c.right=c.top=70;c.near=1;c.far=600;c.updateProjectionMatrix()}
- scene.fog.density=Q.fog;if(W.terrain){W.buildTerrain(Q.seg);W.setTreeDensity(Q.trees);W.indexPerches();W.grass.count=Q.grass?W.grassMax:0}
+ scene.fog.density=Q.fog;if(W.terrain){W.buildTerrain(Q.seg);W.setTreeDensity(Q.trees);W.indexPerches();W.grass.count=Q.grass?W.grassMax:0;if(W.setGrassField)W.setGrassField(Q.gfield,Q.gfield>12000?34:26);if(window.LIFE)LIFE.setDensity(Q.life)}if(window.BLOOM)BLOOM.setOn(!!Q.bloom);
  scene.traverse(o=>{if(o.material&&o.material.needsUpdate!==undefined)o.material.needsUpdate=true});resize()}
 function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.fov=w<h?74:60;camera.updateProjectionMatrix();document.body.classList.toggle('portrait',w<h)}
 addEventListener('resize',resize);
@@ -41,6 +41,7 @@ function auInit(){if(AU.ctx||!SET.sound)return;try{const c=new (window.AudioCont
  AU.wind=mk(500,.6);AU.rain=mk(2500,.4);AU.water=mk(900,.8)}catch(e){}}
 function tone(type,f0,f1,dur,vol,delay){const c=AU.ctx;if(!c||!SET.sound)return;const t=c.currentTime+(delay||0);const o=c.createOscillator();o.type=type;o.frequency.setValueAtTime(f0,t);o.frequency.exponentialRampToValueAtTime(Math.max(20,f1),t+dur);
  const g=c.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.015);g.gain.exponentialRampToValueAtTime(.0005,t+dur);o.connect(g).connect(AU.m);o.start(t);o.stop(t+dur+.05)}
+function pwSfx(k){const base={gold:880,plume:660,berry:520,talon:330,shadow:220,thermal:440}[k]||600;[0,4,7,12].forEach((n,i)=>tone('triangle',base*Math.pow(2,n/12),base*Math.pow(2,n/12)*1.01,.35,.07,i*.07));tone('sine',base*4,base*2,.6,.03,.28)}
 function noise(dur,f,vol,type,delay){const c=AU.ctx;if(!c||!SET.sound)return;const t=c.currentTime+(delay||0);const s=c.createBufferSource();s.buffer=AU.nb;const fl=c.createBiquadFilter();fl.type=type||'lowpass';fl.frequency.value=f;const g=c.createGain();
  g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0005,t+dur);s.connect(fl).connect(g).connect(AU.m);s.start(t,Math.random());s.stop(t+dur+.05)}
 const SFX={flap:()=>noise(.16,700,.22),caw:()=>{for(let i=0;i<3;i++){tone('sawtooth',620,430,.22,.12,i*.28);tone('square',1240,700,.2,.03,i*.28)}},
@@ -93,5 +94,5 @@ document.querySelectorAll('[data-b]').forEach(el=>{const k=el.dataset.b;
  const up=e=>{e.preventDefault();el.classList.remove('dn');if(k==='flap')TI.flap=false;if(k==='dive')TI.dive=false};el.addEventListener('touchend',up);el.addEventListener('touchcancel',up);
  el.addEventListener('mousedown',e=>{auInit();if(k==='flap'){TI.flap=true;TI.tap.flap=true}else if(k==='dive')TI.dive=true;else TI.tap[k]=true});el.addEventListener('mouseup',()=>{TI.flap=false;TI.dive=false})});
 // expose
-window.__BFW={scene,camera,renderer,SET,applyQuality,saveSet,readInput,SFX,abilitySfx,rumble,auInit,layoutTouch,parkStick,resize,sun,hemi,flash,sky,AU,TI,presetName,PRESETS,getQ:()=>Q,isTouch};
+window.__BFW={pwSfx,AU,scene,camera,renderer,SET,applyQuality,saveSet,readInput,SFX,abilitySfx,rumble,auInit,layoutTouch,parkStick,resize,sun,hemi,flash,sky,AU,TI,presetName,PRESETS,getQ:()=>Q,isTouch};
 })();

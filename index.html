@@ -19,6 +19,7 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 #obj{margin-top:6px;font-size:12.5px;line-height:1.3;background:rgba(10,14,12,.55);padding:5px 8px;border-left:3px solid #d9b15a;border-radius:3px;max-width:min(60vw,320px)}
 #clock{top:calc(10px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);font-size:13px;background:rgba(10,14,12,.5);padding:4px 10px;border-radius:12px;white-space:nowrap}#clock b{color:#9fc0ff}
 #mini{top:calc(10px + env(safe-area-inset-top));right:calc(12px + env(safe-area-inset-right));width:112px;height:112px}
+#pwbar{left:calc(12px + env(safe-area-inset-left));top:31%;display:flex;flex-direction:column;gap:6px;pointer-events:none}#pwbar .pw{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;position:relative;background:conic-gradient(var(--c) calc(var(--f)*360deg),rgba(0,0,0,.45) 0);box-shadow:0 0 10px var(--c)}#pwbar .pw i{font-style:normal;font-size:16px;width:29px;height:29px;border-radius:50%;background:rgba(15,20,25,.82);display:grid;place-items:center}#pwbar .pw b{position:absolute;bottom:-4px;right:-6px;font-size:11px;background:#000a;color:#fff;border-radius:6px;padding:0 3px}
 #alt{top:calc(128px + env(safe-area-inset-top));right:calc(12px + env(safe-area-inset-right));font-size:12px;text-shadow:0 1px 2px #000;text-align:right}
 .tb{position:fixed;z-index:4;width:44px;height:44px;border-radius:50%;background:rgba(10,14,12,.55);border:1px solid rgba(255,255,255,.2);color:#efe6d2;font-size:20px;display:flex;align-items:center;justify-content:center}
 #tPause{top:calc(150px + env(safe-area-inset-top));right:calc(12px + env(safe-area-inset-right))}#tMap{top:calc(150px + env(safe-area-inset-top));right:calc(64px + env(safe-area-inset-right))}
@@ -75,7 +76,7 @@ h1{font:700 clamp(30px,8vw,46px)/1.05 Georgia,serif;margin:0 0 4px;letter-spacin
 <canvas id="c"></canvas><div id="loading">BLACKFEATHER WILDS…</div>
 <div id="tzone"></div>
 <div id="meters" class="hud"><div class="mt"><i>❤</i><div><span id="mHp"></span></div></div><div class="mt"><i>🍖</i><div><span id="mFood"></span></div></div><div class="mt"><i>💧</i><div><span id="mWater"></span></div></div><div class="mt"><i>⚡</i><div><span id="mSt"></span></div></div><div id="inv"></div><div id="obj"></div></div>
-<div id="clock" class="hud"></div><canvas id="mini" class="hud" width="224" height="224"></canvas><div id="alt" class="hud"></div>
+<div id="clock" class="hud"></div><canvas id="mini" class="hud" width="224" height="224"></canvas><div id="alt" class="hud"></div><div id="pwbar" class="hud"></div>
 <div id="toast" class="hud"></div><div id="prompt" class="hud"></div><div id="hurt"></div><div id="fade"></div>
 <div class="tb" id="tMap">🗺</div><div class="tb" id="tPause">❚❚</div>
 <div id="stick"><div id="knob"></div></div>
@@ -99,5 +100,5 @@ h1{font:700 clamp(30px,8vw,46px)/1.05 Georgia,serif;margin:0 0 4px;letter-spacin
 <div class="panel" id="p-map"><div class="card"><canvas id="mapC" width="600" height="600"></canvas><button class="btn pri" id="bMapBack" data-back>Close map</button></div></div>
 <div class="panel" id="p-dead"><div class="card"><h2>You have fallen</h2><p class="sub" id="deadMsg"></p><button class="btn pri" id="bRespawn">Wake up in your nest</button><button class="btn" id="bDeadNew">Start a new life</button></div></div>
 <script>if(('ontouchstart' in window)||navigator.maxTouchPoints>0)document.body.classList.add('touch')</script>
-<script src="vendor/three.min.js"></script><script src="world.js"></script><script src="bird.js"></script><script src="main.js"></script><script src="game.js"></script><script src="ui.js"></script>
+<script src="vendor/three.min.js"></script><script src="world.js"></script><script src="bird.js"></script><script src="main.js"></script><script src="bloom.js"></script><script src="life.js"></script><script src="game.js"></script><script src="ui.js"></script>
 </body></html>
