@@ -23,7 +23,7 @@ function mkDeer(stag){const g=new THREE.Group();const coat=M(0x8a5a36),pale=M(0x
  const legs=[];for(const [x,z] of [[-.13,-.45],[.13,-.45],[-.13,.45],[.13,.45]]){const l=new THREE.Mesh(new THREE.CylinderGeometry(.04,.025,.9,5).translate(0,-.45,0),coat);l.position.set(x,.92,z);g.add(l);legs.push(l)}
  g.userData.legs=legs;return g}
 const herds=[];
-function placeHerd(h,px,pz){for(let k=0;k<40;k++){const a=rnd()*TAU,d=90+rnd()*160;const x=px+Math.cos(a)*d,z=pz+Math.sin(a)*d;if(Math.abs(x)>680||Math.abs(z)>680)continue;if(meadow(x,z)){h.x=x;h.z=z;h.tx=x;h.tz=z;
+function placeHerd(h,px,pz){for(let k=0;k<40;k++){const a=rnd()*TAU,d=35+rnd()*95;const x=px+Math.cos(a)*d,z=pz+Math.sin(a)*d;if(Math.abs(x)>680||Math.abs(z)>680)continue;if(meadow(x,z)){h.x=x;h.z=z;h.tx=x;h.tz=z;
   for(const d of h.deer){d.x=x+(rnd()-.5)*10;d.z=z+(rnd()-.5)*10}return true}}return false}
 function buildHerds(){for(const h of herds)for(const d of h.deer)scene.remove(d.m);herds.length=0;const nh=DENS<.6?1:DENS<.9?2:3;
  for(let i=0;i<nh;i++){const h={x:0,z:0,tx:0,tz:0,t:0,flee:0,deer:[]};const n=3+Math.round(rnd()*2*DENS);

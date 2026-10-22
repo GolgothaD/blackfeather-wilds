@@ -27,7 +27,7 @@ const flash=new THREE.AmbientLight(0xcfd8ff,0);scene.add(flash);
 function applyQuality(){Q=PRESETS[presetName()];renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,Q.pr));
  renderer.shadowMap.enabled=!!Q.shadows;sun.castShadow=!!Q.shadows;if(Q.shadows){sun.shadow.mapSize.set(Q.shadows,Q.shadows);if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null}
   const c=sun.shadow.camera;c.left=c.bottom=-70;c.right=c.top=70;c.near=1;c.far=600;c.updateProjectionMatrix()}
- scene.fog.density=Q.fog;if(W.terrain){W.buildTerrain(Q.seg);W.setTreeDensity(Q.trees);W.indexPerches();W.grass.count=Q.grass?W.grassMax:0;if(W.setGrassField)W.setGrassField(Q.gfield,Q.gfield>12000?34:26);if(window.LIFE)LIFE.setDensity(Q.life)}if(window.BLOOM)BLOOM.setOn(!!Q.bloom);
+ scene.fog.density=Q.fog;if(W.terrain){W.buildTerrain(Q.seg);W.setTreeDensity(Q.trees);W.setCards&&W.setCards(!!Q.grass);W.indexPerches();W.grass.count=Q.grass?W.grassMax:0;if(W.setGrassField)W.setGrassField(Q.gfield,Q.gfield>12000?34:26);if(window.LIFE)LIFE.setDensity(Q.life)}if(window.BLOOM)BLOOM.setOn(!!Q.bloom);
  scene.traverse(o=>{if(o.material&&o.material.needsUpdate!==undefined)o.material.needsUpdate=true});resize()}
 function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.fov=w<h?74:60;camera.updateProjectionMatrix();document.body.classList.toggle('portrait',w<h)}
 addEventListener('resize',resize);
@@ -57,6 +57,16 @@ let padIdx=null;addEventListener('gamepadconnected',e=>{padIdx=e.gamepad.index;d
 addEventListener('gamepaddisconnected',()=>{padIdx=null;document.body.classList.remove('pad')});
 function padObj(){const ps=navigator.getGamepads?navigator.getGamepads():[];if(padIdx!=null&&ps[padIdx])return ps[padIdx];for(const p of ps)if(p&&p.connected){padIdx=p.index;document.body.classList.add('pad');return p}return null}
 const TI={mx:0,my:0,cx:0,cy:0,flap:false,dive:false,brake:false,tap:{}};// touch input
+// desktop: pointer-lock mouse look, LMB flap, RMB dive, controller/keyboard hint
+if(!isTouch){const locked=()=>document.pointerLockElement===canvas;
+ canvas.addEventListener('mousedown',e=>{auInit&&auInit();if(!locked()){try{canvas.requestPointerLock()}catch(_){}return}if(e.button===0)TI.flap=true;if(e.button===2)TI.dive=true});
+ addEventListener('mouseup',e=>{if(e.button===0)TI.flap=false;if(e.button===2)TI.dive=false});canvas.addEventListener('contextmenu',e=>e.preventDefault());
+ addEventListener('mousemove',e=>{if(!locked())return;const k=.035*(SET.sens||1);TI.cx+=e.movementX*k;TI.cy+=e.movementY*k*(SET.invert?-1:1)});
+ const hint=document.createElement('div');hint.id='ctlHint';document.body.appendChild(hint);
+ const setHint=()=>{hint.innerHTML=document.body.classList.contains('pad')?'🎮 <b>Controller</b> · LS move · RS look · A flap · B land · X act · Y keen eye · RT dive · LT brake · Start pause':
+  '⌨ <b>WASD</b> move · <b>click</b> for mouse look · <b>Space/LMB</b> flap · <b>Shift/RMB</b> dive · <b>E</b> act · <b>Q</b> land · <b>R</b> ability · <b>M</b> map · <b>Esc</b> pause &nbsp;|&nbsp; 🎮 Xbox pad: <b>press any button</b> to connect'};
+ setHint();addEventListener('gamepadconnected',()=>{setHint();hint.classList.add('flash');setTimeout(()=>hint.classList.remove('flash'),1500)});addEventListener('gamepaddisconnected',()=>{document.body.classList.remove('pad');padIdx=null;setHint()});
+ window.__setHint=setHint}
 const prevB={};let I={};
 const dz=v=>Math.abs(v)<.16?0:(v-Math.sign(v)*.16)/.84;
 function readInput(){const p=padObj();const b=n=>!!(p&&p.buttons[n]&&p.buttons[n].pressed);const bv=n=>p&&p.buttons[n]?p.buttons[n].value:0;

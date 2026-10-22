@@ -1,1 +1,3 @@
 Textures: ambientCG.com (CC0 1.0 Public Domain) — Grass004, Ground037, Rock030, Bark007, Moss002. Resized to 512px for mobile.
+
+Normal maps (CC0, ambientCG.com, resized to 512px): Grass004_n.jpg (Grass004), Ground037_n.jpg (Ground037), Moss002_n.jpg (Moss002)

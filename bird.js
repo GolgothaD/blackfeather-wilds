@@ -24,10 +24,10 @@ function mat(c,extra){return new THREE.MeshStandardMaterial(Object.assign({color
 const CC=new THREE.Color(),CD=new THREE.Color();
 function lin(h){return new THREE.Color(h)}
 // ---- low-level geometry builder: triangles with per-vertex colours and normals
-function GB(){this.p=[];this.c=[];this.n=[]}
-GB.prototype.tri=function(a,b,c,ca,cb,cc){const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2],vx=c[0]-a[0],vy=c[1]-a[1],vz=c[2]-a[2];let nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx;const l=Math.hypot(nx,ny,nz)||1;nx/=l;ny/=l;nz/=l;
+function GB(){this.p=[];this.c=[];this.n=[];this.u=[]}
+GB.prototype.tri=function(a,b,c,ca,cb,cc,ua,ub,uc){this.u.push(...(ua||[0,0]),...(ub||[0,0]),...(uc||[0,0]));const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2],vx=c[0]-a[0],vy=c[1]-a[1],vz=c[2]-a[2];let nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx;const l=Math.hypot(nx,ny,nz)||1;nx/=l;ny/=l;nz/=l;
  this.p.push(...a,...b,...c);this.c.push(ca.r,ca.g,ca.b,cb.r,cb.g,cb.b,cc.r,cc.g,cc.b);for(let i=0;i<3;i++)this.n.push(nx,ny,nz)};
-GB.prototype.geo=function(){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(this.p,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(this.n,3));g.setAttribute('color',new THREE.Float32BufferAttribute(this.c,3));return g};
+GB.prototype.geo=function(){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(this.p,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(this.n,3));g.setAttribute('color',new THREE.Float32BufferAttribute(this.c,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(this.u,2));return g};
 // one feather: lies in XZ, quill from origin toward +z, rotated by ang around Y, placed at (ox,oy,oz).
 // top face uses colours top/tip, underside uses under/underTip. mirror=-1 builds the left wing.
 function feather(gb,o){const {ox,oy,oz,len,wid,ang,mir,top,tip,under,utip,camber=.08,pointy=.25,twist=0}=o;const N=5;const L=[],Rr=[];
@@ -36,12 +36,31 @@ function feather(gb,o){const {ox,oy,oz,len,wid,ang,mir,top,tip,under,utip,camber
   const y=-camber*len*t*t;const tw=twist*t;
   // local: spine along +z, width along x
   const pl=[-w,y+w*tw,t*len],pr=[w,y-w*tw,t*len];
-  const rot=v=>[ox+(v[0]*ca+v[2]*sa)*mir,oy+v[1],oz+(-v[0]*sa+v[2]*ca)];L.push(rot(pl));Rr.push(rot(pr))}
+  const rot=v=>[(ox+v[0]*ca+v[2]*sa)*mir,oy+v[1],oz+(-v[0]*sa+v[2]*ca)];L.push(rot(pl));Rr.push(rot(pr))}
  for(let i=0;i<N;i++){const t0=i/N,t1=(i+1)/N;const c0=CC.copy(top).lerp(tip,Math.pow(t0,1.5)).clone(),c1=CD.copy(top).lerp(tip,Math.pow(t1,1.5)).clone();
   const u0=CC.copy(under).lerp(utip,Math.pow(t0,1.5)).clone(),u1=CD.copy(under).lerp(utip,Math.pow(t1,1.5)).clone();
   const a=L[i],b=Rr[i],c=L[i+1],d=Rr[i+1];const lift=v=>[v[0],v[1]+.0015,v[2]],drop=v=>[v[0],v[1]-.0015,v[2]];
-  if(mir>0){gb.tri(lift(a),lift(c),lift(b),c0,c1,c0);gb.tri(lift(b),lift(c),lift(d),c0,c1,c1);gb.tri(drop(a),drop(b),drop(c),u0,u0,u1);gb.tri(drop(b),drop(d),drop(c),u0,u1,u1)}
-  else{gb.tri(lift(a),lift(b),lift(c),c0,c0,c1);gb.tri(lift(b),lift(d),lift(c),c0,c1,c1);gb.tri(drop(a),drop(c),drop(b),u0,u1,u0);gb.tri(drop(b),drop(c),drop(d),u0,u1,u1)}}}
+  const A=[0,t0],B=[1,t0],Cu=[0,t1],D=[1,t1];
+  if(mir>0){gb.tri(lift(a),lift(c),lift(b),c0,c1,c0,A,Cu,B);gb.tri(lift(b),lift(c),lift(d),c0,c1,c1,B,Cu,D);gb.tri(drop(a),drop(b),drop(c),u0,u0,u1,A,B,Cu);gb.tri(drop(b),drop(d),drop(c),u0,u1,u1,B,D,Cu)}
+  else{gb.tri(lift(a),lift(b),lift(c),c0,c0,c1,A,B,Cu);gb.tri(lift(b),lift(d),lift(c),c0,c1,c1,B,D,Cu);gb.tri(drop(a),drop(c),drop(b),u0,u1,u0,A,Cu,B);gb.tri(drop(b),drop(c),drop(d),u0,u1,u1,B,Cu,D)}}}
+
+// procedural feather textures (albedo modulation + normal map), built once
+const FT=(function(){const mk=(w,h,fn)=>{const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');const id=x.createImageData(w,h);const H=new Float32Array(w*h);
+  for(let j=0;j<h;j++)for(let i=0;i<w;i++)H[j*w+i]=fn(i/w,j/h);
+  const nc=document.createElement('canvas');nc.width=w;nc.height=h;const nx=nc.getContext('2d');const nd=nx.createImageData(w,h);
+  for(let j=0;j<h;j++)for(let i=0;i<w;i++){const o=(j*w+i)*4,v=H[j*w+i];id.data[o]=id.data[o+1]=id.data[o+2]=Math.max(0,Math.min(255,v*255));id.data[o+3]=255;
+   const dx=H[j*w+(i+1)%w]-H[j*w+(i+w-1)%w],dy=H[((j+1)%h)*w+i]-H[((j+h-1)%h)*w+i];const s=3.5;let X=-dx*s,Y=-dy*s,Z=1;const l=Math.hypot(X,Y,Z);
+   nd.data[o]=(X/l*.5+.5)*255;nd.data[o+1]=(Y/l*.5+.5)*255;nd.data[o+2]=(Z/l*.5+.5)*255;nd.data[o+3]=255}
+  x.putImageData(id,0,0);nx.putImageData(nd,0,0);const t=new THREE.CanvasTexture(c),n=new THREE.CanvasTexture(nc);t.colorSpace=THREE.SRGBColorSpace;
+  for(const q of [t,n]){q.wrapS=q.wrapT=THREE.RepeatWrapping;q.anisotropy=4}return [t,n]};
+ const hs=(a,b)=>{const s=Math.sin(a*127.1+b*311.7)*43758.5453;return s-Math.floor(s)};
+ // single feather in uv: u across vane (0..1), v along length. rachis at u=.5, barbs angled toward tip
+ const fe=mk(64,256,(u,v)=>{const d=Math.abs(u-.5);const rach=Math.exp(-Math.pow(d/.03,2));const barb=.5+.5*Math.sin((v*2.4-d*1.1)*90+hs(Math.floor(v*40),u>.5?1:0)*2);
+  const split=hs(Math.floor(v*14+(u>.5?.5:0)),u>.5?3:4)>.86&&d>.2?.55:1;const edge=1-Math.pow(d*2,6)*.35;return (.78+.12*barb)*edge*split*(1-rach*.25)+rach*.12});
+ // body: overlapping contour feathers (scales), tiled
+ const bo=mk(128,128,(u,v)=>{const U=u*8,V=v*8;const row=Math.floor(V),off=row%2?.5:0;const cu=U+off-Math.floor(U+off)-.5,cv=V-row;const r=Math.hypot(cu*1.1,cv*.9);
+  const sc=Math.max(0,1-r)*.6+.4;const shaft=Math.exp(-Math.pow(cu/.04,2))*(1-cv)*.15;const fine=.5+.5*Math.sin((cv*3+Math.abs(cu))*40);return .72+.2*sc+.06*fine+shaft});
+ return {feather:fe,body:bo}})();
 // smooth deformed ellipsoid with colour function
 function blob(rx,ry,rz,colf,deform,ws,hs){const g=new THREE.SphereGeometry(1,ws||22,hs||16);g.rotateX(Math.PI/2);/* poles along z */const p=g.attributes.position;const col=new Float32Array(p.count*3);const c=new THREE.Color();
  for(let i=0;i<p.count;i++){let x=p.getX(i),y=p.getY(i),z=p.getZ(i);const d=deform?deform(x,y,z):[x,y,z];x=d[0];y=d[1];z=d[2];colf(c,x,y,z);col[i*3]=c.r;col[i*3+1]=c.g;col[i*3+2]=c.b;p.setXYZ(i,x*rx,y*ry,z*rz)}
@@ -89,7 +108,8 @@ function makeBird(id){
  const sp=SPECIES[id],C=sp.colors,P=palette(id);const g=new THREE.Group();const body=new THREE.Group();g.add(body);
  const owl=id==='owl',crow=id==='crow',eag=id==='eagle',fal=id==='falcon',hawk=id==='hawk';
  const sheen={metalness:C.sheen*.6,roughness:C.sheen?.38:.82};
- const M=mat(0xffffff,Object.assign({vertexColors:true},sheen));
+ const M=mat(0xffffff,Object.assign({vertexColors:true,map:FT.body[0],normalMap:FT.body[1],normalScale:new THREE.Vector2(.6,.6)},sheen));M.map.repeat.set(3,6);M.normalMap.repeat.set(3,6);
+ const FM=mat(0xffffff,Object.assign({vertexColors:true,map:FT.feather[0],normalMap:FT.feather[1],normalScale:new THREE.Vector2(.8,.8)},sheen));
  // torso: teardrop, chest forward (-z), tapering to the tail (+z)
  const torso=new THREE.Mesh(blob(owl?.21:.17,owl?.22:.165,owl?.32:.36,(c,x,y,z)=>{
    const bel=SM(.15,-.45,y);c.copy(P.back).lerp(P.belly,bel);
@@ -120,11 +140,11 @@ function makeBird(id){
   if(fal||hawk||eag){const ring=new THREE.Mesh(new THREE.TorusGeometry(er*1.05,er*.25,6,12),mat(fal?0xe8c040:0x6a5a40));ring.position.copy(e.position);ring.rotation.y=Math.PI/2*s*.9;head.add(ring)}}
  if(owl){for(const s of [-1,1]){const tf=new THREE.Mesh(new THREE.ConeGeometry(.032,.12,5).translate(0,.06,0),M.clone());tf.material=mat(0x4a3a28);tf.position.set(s*.085,.11,-.02);tf.rotation.set(-.2,0,-s*.38);head.add(tf)}}
  // tail fan
- const tg=new THREE.Group();tg.position.set(0,.02,owl?.26:.33);body.add(tg);const tm=new THREE.Mesh(tailGeo(id,P),M);tg.add(tm);
+ const tg=new THREE.Group();tg.position.set(0,.02,owl?.26:.33);body.add(tg);const tm=new THREE.Mesh(tailGeo(id,P),FM);tg.add(tm);
  // wings: shoulder -> arm feathers ; wrist -> hand (primaries)
  const wings=[];
  for(const s of [-1,1]){const wp=wingParts(id,P,s);const sh=new THREE.Group();sh.rotation.order='YXZ';sh.position.set(s*(owl?.15:.12),owl?.09:.075,owl?-.1:-.14);body.add(sh);
-  const arm=new THREE.Mesh(wp.arm,M);sh.add(arm);const wr=new THREE.Group();wr.rotation.order='YXZ';wr.position.set(s*wp.A,0,0);sh.add(wr);const hand=new THREE.Mesh(wp.hand,M);wr.add(hand);
+  const arm=new THREE.Mesh(wp.arm,FM);sh.add(arm);const wr=new THREE.Group();wr.rotation.order='YXZ';wr.position.set(s*wp.A,0,0);sh.add(wr);const hand=new THREE.Mesh(wp.hand,FM);wr.add(hand);
   wings.push({sh,wr,s,side:sh,A:wp.A,chord:wp.chord})}
  // legs + talons
  const legs=new THREE.Group();body.add(legs);const lm=mat(P.leg.getHex(),{roughness:.55}),km=mat(0x141210,{roughness:.3});

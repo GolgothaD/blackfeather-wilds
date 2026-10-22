@@ -72,6 +72,7 @@ h1{font:700 clamp(30px,8vw,46px)/1.05 Georgia,serif;margin:0 0 4px;letter-spacin
 #p-map .card{width:auto}
 @media (orientation:landscape) and (max-height:560px){#btns{transform:scale(.8);transform-origin:bottom right}.lefty #btns{transform-origin:bottom left}.tb{top:calc(14px + env(safe-area-inset-top))!important}#tPause{right:calc(136px + env(safe-area-inset-right))}#tMap{right:calc(188px + env(safe-area-inset-right))}#alt{top:calc(128px + env(safe-area-inset-top))}
 #p-select{justify-content:flex-end;align-items:center}#p-select .card{width:min(50vw,460px);padding:12px}#selDesc{font-size:13px;margin:4px 0}.card{max-height:94vh}.btn{padding:11px;margin:6px 0}#mapC{width:70vh;height:70vh}}
+#ctlHint{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);font:13px system-ui,sans-serif;color:#e8e4d8;background:rgba(10,14,12,.55);padding:6px 14px;border-radius:14px;pointer-events:none;z-index:5;white-space:nowrap;transition:background .4s}#ctlHint.flash{background:rgba(60,140,80,.8)}body.touch #ctlHint{display:none}@media (max-width:900px){#ctlHint{display:none}}
 </style></head><body>
 <canvas id="c"></canvas><div id="loading">BLACKFEATHER WILDS…</div>
 <div id="tzone"></div>
@@ -100,5 +101,5 @@ h1{font:700 clamp(30px,8vw,46px)/1.05 Georgia,serif;margin:0 0 4px;letter-spacin
 <div class="panel" id="p-map"><div class="card"><canvas id="mapC" width="600" height="600"></canvas><button class="btn pri" id="bMapBack" data-back>Close map</button></div></div>
 <div class="panel" id="p-dead"><div class="card"><h2>You have fallen</h2><p class="sub" id="deadMsg"></p><button class="btn pri" id="bRespawn">Wake up in your nest</button><button class="btn" id="bDeadNew">Start a new life</button></div></div>
 <script>if(('ontouchstart' in window)||navigator.maxTouchPoints>0)document.body.classList.add('touch')</script>
-<script src="vendor/three.min.js"></script><script src="world.js"></script><script src="bird.js"></script><script src="main.js"></script><script src="bloom.js"></script><script src="life.js"></script><script src="game.js"></script><script src="ui.js"></script>
+<script src="vendor/three.min.js"></script><script src="world.js"></script><script src="bird.js"></script><script src="main.js"></script><script src="bloom.js"></script><script src="life.js"></script><script src="biomes.js"></script><script src="game.js"></script><script src="ui.js"></script>
 </body></html>

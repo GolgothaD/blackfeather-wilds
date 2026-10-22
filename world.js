@@ -50,15 +50,15 @@ const TL=new THREE.TextureLoader();
 function tex(n,srgb,rep){const t=TL.load('tex/'+n+'.jpg');t.wrapS=t.wrapT=THREE.RepeatWrapping;if(srgb)t.colorSpace=THREE.SRGBColorSpace;if(rep)t.repeat.set(rep[0],rep[1]);t.anisotropy=4;return t}
 W.build=function(scene,Q){ // Q: quality {seg,trees,grass,shadows}
  const r=rng(99);W.scene=scene;
- const T={grass:tex('Grass004_c',1),dirt:tex('Ground037_c',1),rock:tex('Rock030_c',1),rockN:tex('Rock030_n'),bark:tex('Bark007_c',1,[1,3]),barkN:tex('Bark007_n',0,[1,3]),moss:tex('Moss002_c',1)};
+ const T={grass:tex('Grass004_c',1),dirt:tex('Ground037_c',1),rock:tex('Rock030_c',1),rockN:tex('Rock030_n'),bark:tex('Bark007_c',1,[1,3]),barkN:tex('Bark007_n',0,[1,3]),moss:tex('Moss002_c',1),grassN:tex('Grass004_n'),dirtN:tex('Ground037_n'),mossN:tex('Moss002_n')};
  W.T=T;
  // ---- terrain
  W.terrainMat=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.95,metalness:0});
  W.terrainMat.onBeforeCompile=sh=>{
-  sh.uniforms.tG={value:T.grass};sh.uniforms.tD={value:T.dirt};sh.uniforms.tR={value:T.rock};
+  sh.uniforms.tG={value:T.grass};sh.uniforms.tD={value:T.dirt};sh.uniforms.tR={value:T.rock};sh.uniforms.tGN={value:T.grassN};sh.uniforms.tDN={value:T.dirtN};sh.uniforms.tRN={value:T.rockN};
   sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nattribute vec2 aMix;varying vec2 vMix;varying vec3 vWP;varying vec3 vWN;')
    .replace('#include <begin_vertex>','#include <begin_vertex>\nvMix=aMix;vWP=(modelMatrix*vec4(transformed,1.)).xyz;vWN=normalize(mat3(modelMatrix)*objectNormal);');
-  sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nuniform sampler2D tG,tD,tR;varying vec2 vMix;varying vec3 vWP;varying vec3 vWN;')
+  sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nuniform sampler2D tG,tD,tR,tGN,tDN,tRN;varying vec2 vMix;varying vec3 vWP;varying vec3 vWN;')
    .replace('#include <map_fragment>',`
    vec3 gA=texture2D(tG,vWP.xz*.16).rgb,gB=texture2D(tG,vWP.xz*.031+.37).rgb;vec3 g=mix(gA,gB,.45)*vec3(.92,1.,.82);
    vec3 dd=mix(texture2D(tD,vWP.xz*.11).rgb,texture2D(tD,vWP.xz*.027).rgb,.4);
@@ -72,7 +72,13 @@ W.build=function(scene,Q){ // Q: quality {seg,trees,grass,shadows}
    col*=mix(.8,1.15,var);col=mix(col,col*vec3(1.12,.98,.66),smoothstep(.5,.72,var2)*(1.-wr)*(1.-clamp(vMix.y,0.,1.))*.55);
    col=mix(col,col*vec3(.78,.9,.7),clamp(vMix.y,0.,1.)*.35);
    col*=mix(1.,.55,smoothstep(0.,-3.,vWP.y));
-   diffuseColor.rgb*=col;`);
+   float wDirt=clamp(max(max(vMix.x,vMix.y*.8),sand),0.,1.);
+   diffuseColor.rgb*=col;`)
+   .replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
+   { vec3 nG=texture2D(tGN,vWP.xz*.16).xyz*2.-1.; vec3 nD=texture2D(tDN,vWP.xz*.11).xyz*2.-1.; vec3 nR=texture2D(tRN,vWP.xz*.045).xyz*2.-1.;
+     vec3 nt=mix(mix(nG,nD,wDirt),nR,wr); float fd=1.-smoothstep(30.,140.,length(vViewPosition));
+     vec3 wn=normalize(vWN+vec3(nt.x,0.,-nt.y)*.9*fd);
+     normal=normalize((viewMatrix*vec4(wn,0.)).xyz); }`);
  };
  W.buildTerrain=function(seg){
   if(W.terrain){scene.remove(W.terrain);W.terrain.geometry.dispose()}
@@ -115,6 +121,34 @@ W.build=function(scene,Q){ // Q: quality {seg,trees,grass,shadows}
  {const cs=[];for(let i=0;i<5;i++){const y=.22+i*.16,rad=.42-i*.075;const c=new THREE.ConeGeometry(rad,.32,9,2).translate(0,y+.16,0);lumpy(c,.3,r,9);colorize(c,[.16,.27,.15],.25,r);cs.push(c)}geo.pineF=mergeGeos(cs)}
  geo.broadT=mergeGeos([new THREE.CylinderGeometry(.12,.25,.62,7).translate(0,.31,0),new THREE.CylinderGeometry(.04,.08,.35,5).rotateZ(.8).translate(.12,.55,0),new THREE.CylinderGeometry(.04,.08,.32,5).rotateZ(-.9).rotateY(1.5).translate(0,.55,-.12)]);
  {const bs=[];const pts=[[0,.78,0,.3],[.2,.68,.08,.22],[-.18,.66,-.06,.23],[.05,.66,-.2,.2],[-.06,.7,.2,.21],[0,.95,0,.2]];for(const [x,y,z,s] of pts){const b=new THREE.IcosahedronGeometry(s,2);lumpy(b,.45,r,7);b.translate(x,y,z);colorize(b,[.22,.31,.14],.3,r);bs.push(b)}geo.broadF=mergeGeos(bs)}
+ // ---- alpha leaf cards (Med/High): procedural leaf atlas, left=broadleaf right=needles
+ {const cv=document.createElement('canvas');cv.width=512;cv.height=256;const x=cv.getContext('2d');
+  for(let i=0;i<260;i++){const px=8+r()*240,py=8+r()*240;const d=Math.hypot(px-128,py-128);if(d>118)continue;const a=r()*6.28,L=9+r()*9;
+   const g=60+r()*70|0;x.fillStyle=`rgb(${g*.55|0},${g},${g*.35|0})`;x.save();x.translate(px,py);x.rotate(a);x.beginPath();x.ellipse(0,0,L,L*.45,0,0,6.28);x.fill();
+   x.strokeStyle=`rgba(20,30,10,.5)`;x.lineWidth=1;x.beginPath();x.moveTo(-L,0);x.lineTo(L,0);x.stroke();x.restore()}
+  for(let b=0;b<7;b++){const bx=256+20+b*32,by=20;x.strokeStyle='#3b2b1c';x.lineWidth=2;x.beginPath();x.moveTo(bx+8,by);x.lineTo(bx+14,by+220);x.stroke();
+   for(let k=0;k<70;k++){const t=k/70,cx=bx+8+t*6,cy=by+t*220;const sd=k%2?1:-1;const L=16*(1-t*.4)*(.7+r()*.5);const g=50+r()*50|0;
+    x.strokeStyle=`rgb(${g*.45|0},${g*.95|0},${g*.5|0})`;x.lineWidth=1.6;x.beginPath();x.moveTo(cx,cy);x.lineTo(cx+sd*L,cy+L*.55);x.stroke()}}
+  const lt=new THREE.CanvasTexture(cv);lt.colorSpace=THREE.SRGBColorSpace;lt.anisotropy=4;W.leafTex=lt;
+  const cardMat=new THREE.MeshStandardMaterial({map:lt,alphaTest:.45,side:THREE.DoubleSide,vertexColors:true,roughness:.85});nearFade(cardMat);sway(cardMat,.03);W.cardMat=cardMat;
+  const quads=(list,half)=>{const P=[],N=[],U=[],Cc=[],I=[];let v=0;const tmp=new THREE.Vector3();
+   for(const [c,d,sz,yaw,tilt] of list){const n=new THREE.Vector3(...d).normalize();
+    const ax=new THREE.Vector3(Math.cos(yaw),0,Math.sin(yaw)),ay=new THREE.Vector3(0,1,0).applyAxisAngle(ax,tilt);
+    const cr=[[-1,-1],[1,-1],[1,1],[-1,1]];const u0=half?.5:0;const sh=.75+r()*.35;
+    for(const [a,b] of cr){tmp.set(c[0],c[1],c[2]).addScaledVector(ax,a*sz).addScaledVector(ay,b*sz*(half?1.4:1));P.push(tmp.x,tmp.y,tmp.z);
+     const nn=n.clone().multiplyScalar(.8).add(new THREE.Vector3(a*.25,b*.2,0).applyAxisAngle(new THREE.Vector3(0,1,0),-yaw)).normalize();N.push(nn.x,nn.y,nn.z);
+     U.push(u0+(a+1)*.25,(b+1)*.5);Cc.push(sh*.95,sh,sh*.9)}
+    I.push(v,v+1,v+2,v,v+2,v+3);v+=4}
+   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(N,3));
+   g.setAttribute('uv',new THREE.Float32BufferAttribute(U,2));g.setAttribute('color',new THREE.Float32BufferAttribute(Cc,3));g.setIndex(I);return g};
+  const bl=[];const pts=[[0,.78,0,.3],[.2,.68,.08,.22],[-.18,.66,-.06,.23],[.05,.66,-.2,.2],[-.06,.7,.2,.21],[0,.95,0,.2]];
+  for(const [cx,cy,cz,s] of pts)for(let k=0;k<14;k++){const th=r()*6.28,ph=Math.acos(r()*1.6-.6);const d=[Math.sin(ph)*Math.cos(th),Math.cos(ph),Math.sin(ph)*Math.sin(th)];
+   bl.push([[cx+d[0]*s*1.02,cy+d[1]*s*1.02,cz+d[2]*s*1.02],d,s*.42,th+1.57+(r()-.5),(r()-.5)*1.2])}
+  geo.broadC=quads(bl,0);
+  const pl=[];for(let i=0;i<5;i++){const y=.22+i*.16,rad=.42-i*.075;for(let k=0;k<12;k++){const th=k/12*6.28+r()*.4;const d=[Math.cos(th),.35,Math.sin(th)];
+   pl.push([[Math.cos(th)*rad*.75,y+.12,Math.sin(th)*rad*.75],d,rad*.42,th+1.57,.55+r()*.3])}}
+  geo.pineC=quads(pl,1);
+  geo.broadF.scale(.9,.94,.9);geo.pineF.scale(.88,1,.88);}
  geo.snag=mergeGeos([new THREE.CylinderGeometry(.08,.22,1,6).translate(0,.5,0),new THREE.CylinderGeometry(.025,.05,.4,5).rotateZ(1).translate(.17,.7,0),new THREE.CylinderGeometry(.02,.045,.34,5).rotateZ(-1.1).translate(-.14,.55,0),new THREE.CylinderGeometry(.02,.04,.3,5).rotateX(1).translate(0,.82,.12)]);
  // scatter
  const trees=[];W.trees=trees;W.perches=[];
@@ -138,11 +172,12 @@ W.build=function(scene,Q){ // Q: quality {seg,trees,grass,shadows}
  const M=new THREE.Matrix4(),q=new THREE.Quaternion(),S=new THREE.Vector3(),P=new THREE.Vector3(),C=new THREE.Color(),Y=new THREE.Vector3(0,1,0);
  for(const ch of W.chunks){
   const byType=[[],[],[]];ch.list.forEach(t=>byType[t.type].push(t));
-  const defs=[[geo.pineT,barkMat,0],[geo.pineF,pineMat,0],[geo.broadT,barkMat,1],[geo.broadF,leafMat,1],[geo.snag,barkMat,2]];
+  const defs=[[geo.pineT,barkMat,0],[geo.pineF,pineMat,0],[geo.broadT,barkMat,1],[geo.broadF,leafMat,1],[geo.broadC,W.cardMat,1],[geo.pineC,W.cardMat,0],[geo.snag,barkMat,2]];
   for(const [g,mat,ty] of defs){const L=byType[ty];if(!L.length)continue;const im=new THREE.InstancedMesh(g,mat,L.length);
    L.forEach((t,k)=>{q.setFromAxisAngle(Y,t.rot);S.set(t.w,t.ht,t.w);if(g===geo.pineT||g===geo.broadT||g===geo.snag){const k=t.ht*(t.giant?.3:ty===0?.07:ty===2?.09:.13);S.set(k,t.ht,k)};P.set(t.x,t.y,t.z);M.compose(P,q,S);im.setMatrixAt(k,M);
     C.setRGB(t.tint,t.tint*(.95+((t.id*7)%10)/60),t.tint*.9);im.setColorAt(k,C)});
-   im.castShadow=true;im.receiveShadow=true;im.computeBoundingSphere();im.userData.list=L;scene.add(im);ch.meshes.push(im)}}
+   im.castShadow=mat!==W.cardMat;im.receiveShadow=true;im.computeBoundingSphere();im.userData.list=L;if(mat===W.cardMat)im.userData.card=true;scene.add(im);ch.meshes.push(im)}}
+ W.setCards=on=>{for(const ch of W.chunks)for(const im of ch.meshes)if(im.userData.card)im.visible=on};
  W.setTreeDensity=function(frac){for(const ch of W.chunks)for(const im of ch.meshes){const L=im.userData.list;let c=0;
   // keep giants, take a prefix fraction (trees were shuffled randomly by generation)
   const keep=L.filter((t,i)=>t.giant||((t.id*2654435761>>>0)%1000)/1000<frac);c=keep.length;
@@ -256,7 +291,7 @@ W.buildFeatures=function(scene,r,K){const {q,S,P,M,Y}=K;const E=new THREE.Euler(
  {const fl=[];for(let i=0;i<4;i++){const b=new THREE.PlaneGeometry(.16,.16).rotateY(i*.8);b.translate(0,.45,0);fl.push(b)}
   W.gfield=null;W.setGrassField=function(n,R){if(W.gfield){scene.remove(W.gfield);W.gfield.dispose();W.gfield=null}if(!n)return;
    const im=new THREE.InstancedMesh(W.grassGeo,W.grassMat,n);im.frustumCulled=false;im.receiveShadow=true;const loc=new Float32Array(n*4);const rr=rng(7);const C=new THREE.Color();
-   for(let i=0;i<n;i++){loc[i*4]=rr()*R*2;loc[i*4+1]=rr()*R*2;loc[i*4+2]=rr()*6.28;loc[i*4+3]=.3+rr()*.42;C.setHSL(.2+rr()*.08,.35+rr()*.25,.32+rr()*.2);C.multiplyScalar(2.1);im.setColorAt(i,C)}
+   for(let i=0;i<n;i++){loc[i*4]=rr()*R*2;loc[i*4+1]=rr()*R*2;loc[i*4+2]=rr()*6.28;loc[i*4+3]=.22+rr()*.3;{const dry=rr()<.25;C.setHSL(dry?.13+rr()*.04:.22+rr()*.07,dry?.3+rr()*.15:.22+rr()*.2,.26+rr()*.16)};C.multiplyScalar(1.6);im.setColorAt(i,C)}
    im.userData={loc,R,key:new Int32Array(n*2).fill(-99999)};scene.add(im);W.gfield=im};
   const Mx=new THREE.Matrix4(),Qx=new THREE.Quaternion(),Sx=new THREE.Vector3(),Px=new THREE.Vector3(),Yx=new THREE.Vector3(0,1,0);
   W.updateGrassField=function(px,pz){const im=W.gfield;if(!im)return;const {loc,R,key}=im.userData;const T=R*2;let dirty=false;
