@@ -1,0 +1,103 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Blackfeather Wilds</title><meta name="theme-color" content="#0d1210"><meta name="description" content="Open-world bird survival. Fly, hunt, drink and build your nest as a crow or a bird of prey.">
+<link rel="manifest" href="manifest.json"><link rel="icon" href="favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
+<style>
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:#0d1210;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:#efe6d2}
+canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
+#loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#0d1210;font:22px Georgia,serif;letter-spacing:3px;z-index:50}
+#tzone{position:fixed;inset:0;z-index:2}
+.hud{position:fixed;z-index:3;pointer-events:none}
+#meters{top:calc(10px + env(safe-area-inset-top));left:calc(12px + env(safe-area-inset-left));width:min(46vw,230px)}
+.mt{display:flex;align-items:center;gap:6px;margin-bottom:5px;font-size:13px;text-shadow:0 1px 2px #000}
+.mt i{font-style:normal;width:20px;text-align:center}.mt div{flex:1;height:9px;background:rgba(0,0,0,.45);border-radius:5px;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.12)}
+.mt div span{display:block;height:100%;border-radius:5px;transition:width .2s}.mt div.low{animation:pulse 1s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 2px #ff5040}}
+#mHp{background:linear-gradient(#e2564a,#a8261d)}#mFood{background:linear-gradient(#e9a24a,#b06a1a)}#mWater{background:linear-gradient(#5fb4e8,#2a70a8)}#mSt{background:linear-gradient(#f2e27a,#b9a536)}
+#inv{display:flex;gap:9px;font-size:13px;margin-top:3px;text-shadow:0 1px 2px #000;flex-wrap:wrap}#inv .cap{opacity:.6;margin-left:-6px}#inv .hold{color:#ffcf7a}
+#obj{margin-top:6px;font-size:12.5px;line-height:1.3;background:rgba(10,14,12,.55);padding:5px 8px;border-left:3px solid #d9b15a;border-radius:3px;max-width:min(60vw,320px)}
+#clock{top:calc(10px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);font-size:13px;background:rgba(10,14,12,.5);padding:4px 10px;border-radius:12px;white-space:nowrap}#clock b{color:#9fc0ff}
+#mini{top:calc(10px + env(safe-area-inset-top));right:calc(12px + env(safe-area-inset-right));width:112px;height:112px}
+#alt{top:calc(128px + env(safe-area-inset-top));right:calc(12px + env(safe-area-inset-right));font-size:12px;text-shadow:0 1px 2px #000;text-align:right}
+.tb{position:fixed;z-index:4;width:44px;height:44px;border-radius:50%;background:rgba(10,14,12,.55);border:1px solid rgba(255,255,255,.2);color:#efe6d2;font-size:20px;display:flex;align-items:center;justify-content:center}
+#tPause{top:calc(150px + env(safe-area-inset-top));right:calc(12px + env(safe-area-inset-right))}#tMap{top:calc(150px + env(safe-area-inset-top));right:calc(64px + env(safe-area-inset-right))}
+#toast{top:calc(46px + env(safe-area-inset-top));left:50%;transform:translateX(-50%) translateY(-8px);opacity:0;transition:.25s;background:rgba(12,16,14,.82);border:1px solid rgba(217,177,90,.5);padding:8px 14px;border-radius:8px;font-size:14px;max-width:min(82vw,460px);text-align:center}
+#toast.on{opacity:1;transform:translateX(-50%)}
+#prompt{left:50%;bottom:calc(30% + 10px);transform:translateX(-50%);background:rgba(12,16,14,.8);padding:8px 14px;border-radius:20px;font-size:15px;opacity:0;transition:opacity .15s;white-space:nowrap}#prompt.on{opacity:1}
+.kx{display:inline-block;width:22px;height:22px;border-radius:50%;background:#2f6fd8;color:#fff;text-align:center;line-height:22px;font-size:13px;margin-right:4px}
+#hurt{position:fixed;inset:0;z-index:3;pointer-events:none;box-shadow:inset 0 0 120px 40px rgba(200,20,10,.7);opacity:0}#hurt.on{animation:hurt .6s}@keyframes hurt{0%{opacity:1}100%{opacity:0}}
+#fade{position:fixed;inset:0;z-index:30;background:#000;opacity:0;pointer-events:none}#fade.on{animation:fade 1.6s}@keyframes fade{0%{opacity:0}40%{opacity:1}100%{opacity:0}}
+/* touch */
+#stick{position:fixed;z-index:3;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.06),rgba(255,255,255,.12));border:2px solid rgba(255,255,255,.22);pointer-events:none;opacity:.55}
+#stick.live{opacity:.95}#knob{position:absolute;left:50%;top:50%;border-radius:50%;background:radial-gradient(circle at 40% 35%,rgba(255,255,255,.55),rgba(200,200,200,.25));border:2px solid rgba(255,255,255,.5);transform:translate(-50%,-50%)}
+#btns{position:fixed;z-index:4;right:calc(16px + env(safe-area-inset-right));bottom:calc(18px + env(safe-area-inset-bottom));width:250px;height:230px}
+.lefty #btns{right:auto;left:calc(16px + env(safe-area-inset-left))}
+.b{position:absolute;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;color:#fff;border:2px solid rgba(255,255,255,.35);text-shadow:0 1px 2px #000;backdrop-filter:blur(2px)}
+.b span{font-size:20px;line-height:1}.b small{font-size:10px;font-weight:600;opacity:.9;margin-top:2px;text-transform:uppercase;letter-spacing:.5px}
+.b.dn{filter:brightness(1.5);transform:scale(.94)}.b.dim{opacity:.4}
+#bFlap{width:104px;height:104px;right:0;bottom:0;background:rgba(60,160,70,.55)}
+#bDive{width:74px;height:74px;right:112px;bottom:0;background:rgba(200,160,40,.5)}
+#bLand{width:74px;height:74px;right:14px;bottom:114px;background:rgba(200,60,50,.5)}
+#bAct{width:74px;height:74px;right:112px;bottom:84px;background:rgba(50,110,220,.5)}#bAct.hot{box-shadow:0 0 0 3px #8fc0ff,0 0 18px #6aa8ff}
+#bAb{width:62px;height:62px;right:118px;bottom:166px;background:rgba(220,190,40,.45)}#bAb.cd{background:conic-gradient(rgba(0,0,0,.6) calc(var(--cd)*360deg),rgba(220,190,40,.45) 0)}
+.portrait #btns{transform:scale(.86);transform-origin:bottom right}.portrait.lefty #btns{transform-origin:bottom left}
+.portrait #meters{width:52vw}.portrait #clock{left:auto;right:calc(12px + env(safe-area-inset-right));transform:none;top:calc(128px + env(safe-area-inset-top))}.portrait #alt{top:calc(154px + env(safe-area-inset-top))}.portrait .tb{top:calc(176px + env(safe-area-inset-top))}.portrait #toast{top:calc(200px + env(safe-area-inset-top))}
+.portrait #prompt{bottom:calc(36% + 10px)}
+body:not(.touch) #btns,body:not(.touch) #stick,body:not(.touch) .tb{display:none}
+body.inmenu .hud,body.inmenu #btns,body.inmenu #stick,body.inmenu .tb{display:none!important}
+/* panels */
+.panel{position:fixed;inset:0;z-index:10;display:none;align-items:center;justify-content:center;padding:20px;background:radial-gradient(ellipse at center,rgba(8,12,10,.55),rgba(5,8,6,.85))}
+.panel.on{display:flex}.card{width:min(94vw,460px);max-height:92vh;overflow:auto;background:rgba(16,22,18,.88);border:1px solid rgba(217,177,90,.35);border-radius:14px;padding:18px 18px 14px;box-shadow:0 10px 60px #000}
+h1{font:700 clamp(30px,8vw,46px)/1.05 Georgia,serif;margin:0 0 4px;letter-spacing:1px;color:#f3e7c8;text-shadow:0 2px 20px rgba(0,0,0,.8)}h2{font:700 22px Georgia,serif;margin:0 0 10px;color:#f0dfb5}
+.sub{color:#bfb59e;font-size:14px;margin:0 0 16px}
+.btn{display:block;width:100%;margin:8px 0;padding:14px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.07);color:#f2ead6;font-size:17px;font-weight:600;text-align:left;cursor:pointer}
+.btn.pri{background:linear-gradient(#c9973f,#8d6422);border-color:#e9c47a;color:#1b1206;text-align:center}.btn.foc{outline:3px solid #8fc0ff;outline-offset:1px}
+.btn:active{filter:brightness(1.3)}.btn[disabled]{opacity:.55}
+#p-title{background:linear-gradient(180deg,rgba(5,8,6,.1),rgba(5,8,6,.75))}#p-title .card{background:rgba(10,14,12,.6);text-align:center}#p-title .btn{text-align:center}
+.feather{font-size:12px;color:#9c927c;margin-top:10px}
+#p-select{align-items:flex-end;background:linear-gradient(180deg,rgba(0,0,0,0) 40%,rgba(5,8,6,.85))}#p-select .card{width:min(96vw,520px)}
+.selhead{display:flex;align-items:center;justify-content:space-between;gap:10px}.arrow{width:50px;height:50px;border-radius:50%;font-size:24px;text-align:center;padding:0;flex:none;margin:0}
+#selName{font:700 24px Georgia,serif;text-align:center}#selTag{color:#d9b15a;font-size:13px;text-align:center;text-transform:uppercase;letter-spacing:1.5px}
+#selDesc{font-size:14px;line-height:1.4;color:#d8cfba;margin:8px 0}#selAb{font-size:13px;color:#ffd77a;margin-bottom:6px}
+.bar{display:flex;align-items:center;font-size:12px;margin:3px 0}.bar span{width:88px;color:#bdb39b}.bar i{display:flex;gap:3px}.bar b,.bar u{width:22px;height:8px;border-radius:2px;background:#d9b15a;display:block}.bar u{background:rgba(255,255,255,.12)}
+#selDots{display:flex;gap:6px;justify-content:center;margin:8px 0 2px;flex-wrap:wrap}#selDots span{font-size:12px;padding:4px 8px;border-radius:10px;background:rgba(255,255,255,.07);cursor:pointer}#selDots span.on{background:#d9b15a;color:#1b1206}
+.row{display:flex;gap:8px}.row .btn{text-align:center}
+.help p{font-size:14px;line-height:1.45;margin:6px 0;color:#ddd3bd}.help b{color:#ffd77a}.help h3{font-size:15px;margin:12px 0 4px;color:#f0dfb5}
+.btn.set{display:flex;justify-content:space-between;align-items:center;font-size:15px;padding:12px}.btn.set b{color:#ffd77a;font-weight:600}
+.btn.upg{display:block;padding:10px 12px}.btn.upg b{display:block;font-size:15px}.btn.upg small{display:block;font-size:12.5px;color:#cfc5ad;font-weight:400;margin:3px 0}.btn.upg em{font-size:12.5px;font-style:normal;color:#e48c7a}.btn.upg em.ok{color:#9ee08a}.btn.upg.have{opacity:.6}
+#nestStore{font-size:13.5px;color:#d8cfba;margin-bottom:6px}
+#mapC{width:min(86vw,72vh);height:min(86vw,72vh);display:block;margin:0 auto 6px;border-radius:8px}
+#p-map .card{width:auto}
+@media (orientation:landscape) and (max-height:560px){#btns{transform:scale(.8);transform-origin:bottom right}.lefty #btns{transform-origin:bottom left}.tb{top:calc(14px + env(safe-area-inset-top))!important}#tPause{right:calc(136px + env(safe-area-inset-right))}#tMap{right:calc(188px + env(safe-area-inset-right))}#alt{top:calc(128px + env(safe-area-inset-top))}
+#p-select{justify-content:flex-end;align-items:center}#p-select .card{width:min(50vw,460px);padding:12px}#selDesc{font-size:13px;margin:4px 0}.card{max-height:94vh}.btn{padding:11px;margin:6px 0}#mapC{width:70vh;height:70vh}}
+</style></head><body>
+<canvas id="c"></canvas><div id="loading">BLACKFEATHER WILDS…</div>
+<div id="tzone"></div>
+<div id="meters" class="hud"><div class="mt"><i>❤</i><div><span id="mHp"></span></div></div><div class="mt"><i>🍖</i><div><span id="mFood"></span></div></div><div class="mt"><i>💧</i><div><span id="mWater"></span></div></div><div class="mt"><i>⚡</i><div><span id="mSt"></span></div></div><div id="inv"></div><div id="obj"></div></div>
+<div id="clock" class="hud"></div><canvas id="mini" class="hud" width="224" height="224"></canvas><div id="alt" class="hud"></div>
+<div id="toast" class="hud"></div><div id="prompt" class="hud"></div><div id="hurt"></div><div id="fade"></div>
+<div class="tb" id="tMap">🗺</div><div class="tb" id="tPause">❚❚</div>
+<div id="stick"><div id="knob"></div></div>
+<div id="btns"><div class="b" id="bFlap" data-b="flap"><span>A</span><small>Flap</small></div><div class="b" id="bDive" data-b="dive"><span>RT</span><small>Dive</small></div><div class="b" id="bLand" data-b="land"><span>B</span><small>Land</small></div><div class="b" id="bAct" data-b="act"><span>X</span><small>Act</small></div><div class="b" id="bAb" data-b="ab"><span>Y</span><small>Skill</small></div></div>
+<div class="panel" id="p-title"><div class="card"><h1>Blackfeather<br>Wilds</h1><p class="sub">Fly. Hunt. Drink. Build. Survive.</p>
+ <button class="btn pri" id="bCont">Continue</button><button class="btn" id="bNew">New Game</button><button class="btn" id="bHow">How to Play</button><button class="btn" id="bSettings">Settings</button>
+ <div class="feather">Xbox controller supported · Add to Home screen to install</div></div></div>
+<div class="panel" id="p-select"><div class="card"><div class="selhead"><button class="btn arrow" id="selPrev">‹</button><div><div id="selName"></div><div id="selTag"></div></div><button class="btn arrow" id="selNext">›</button></div>
+ <div id="selDots"></div><div id="selDesc"></div><div id="selAb"></div><div id="selBars"></div>
+ <div class="row"><button class="btn" id="bSelBack" data-back>Back</button><button class="btn pri" id="bStart">Fly!</button></div></div></div>
+<div class="panel" id="p-help"><div class="card help"><h2>How to survive</h2>
+ <p>Keep your <b>❤ health</b> up by never letting <b>🍖 food</b> or <b>💧 water</b> run dry. <b>⚡ Stamina</b> drains while you flap and refills while gliding, perching or on the ground.</p>
+ <h3>Flying</h3><p><b>A / FLAP</b> (hold) to climb and speed up. Release to glide. <b>Stick</b> steers. <b>RT / DIVE</b> to dive fast, <b>LT</b> to brake. <b>B / LAND</b> perches on the nearest tree, rock or your nest. Right stick or a drag on the right side moves the camera.</p>
+ <h3>Food & water</h3><p>Dive onto mice, rabbits and songbirds to snatch them, then press <b>X / ACT</b> to eat. Fly low over prey from high up: they spot you if you hover low. Scavenge carcasses, berries and grubs (crows). Land at any water's edge and press <b>X</b> to drink. Eagles grab fish right out of the lake.</p>
+ <h3>Your nest</h3><p>Pick up sticks under trees (and moss by rocks and logs). Perch on a tree and press <b>X</b> to build a nest. Landing at the nest drops off what you carry. At the nest you can sleep, save and build upgrades, up to a full tree base with walls and a roof.</p>
+ <h3>Danger</h3><p>Foxes hunt by day and wolves by night if you stay on the ground. Storms bring wind, cold and lightning. Shelter in a tree or your nest, and don't fly high. <b>Y</b> uses your bird's skill.</p>
+ <button class="btn pri" id="bHelpBack" data-back>Got it</button></div></div>
+<div class="panel" id="p-settings"><div class="card"><h2>Settings</h2><div id="setList"></div><button class="btn pri" id="bSetBack" data-back>Done</button></div></div>
+<div class="panel" id="p-pause"><div class="card"><h2>Paused</h2><button class="btn pri" id="bResume" data-back>Resume</button><button class="btn" id="bPMap">Map</button><button class="btn" id="bPHelp">How to Play</button><button class="btn" id="bPSet">Settings</button><button class="btn" id="bQuit">Save & Quit to Title</button></div></div>
+<div class="panel" id="p-nest"><div class="card"><h2>Your Nest</h2><div id="nestStore"></div><button class="btn pri" id="bRest">Rest</button><button class="btn" id="bLarder">Eat from larder</button><div id="upgList"></div><button class="btn" id="bNestBack" data-back>Leave</button></div></div>
+<div class="panel" id="p-map"><div class="card"><canvas id="mapC" width="600" height="600"></canvas><button class="btn pri" id="bMapBack" data-back>Close map</button></div></div>
+<div class="panel" id="p-dead"><div class="card"><h2>You have fallen</h2><p class="sub" id="deadMsg"></p><button class="btn pri" id="bRespawn">Wake up in your nest</button><button class="btn" id="bDeadNew">Start a new life</button></div></div>
+<script>if(('ontouchstart' in window)||navigator.maxTouchPoints>0)document.body.classList.add('touch')</script>
+<script src="vendor/three.min.js"></script><script src="world.js"></script><script src="bird.js"></script><script src="main.js"></script><script src="game.js"></script><script src="ui.js"></script>
+</body></html>
