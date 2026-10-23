@@ -39,8 +39,8 @@ $('#bMapBack').onclick=()=>showPanel(mapFrom);let mapFrom=null;
 function showHelpOnce(){if(!localStorage.getItem('bfw-help')){localStorage.setItem('bfw-help','1');prevPanel=null;showPanel('help')}}
 $('#tPause').addEventListener('click',()=>{if(!panel)showPanel('pause')});$('#tMap').addEventListener('click',()=>{if(!panel)openMap()});
 // ---------- settings
-const SOPTS={gfx:[['auto','Auto'],['low','Low'],['med','Medium'],['high','High']],stick:[['S','Small'],['M','Medium'],['L','Large']],hand:[['left','Stick left'],['right','Stick right']],invert:[[false,'Up = climb'],[true,'Up = dive (pilot)']],vib:[[true,'On'],[false,'Off']],sound:[[true,'On'],[false,'Off']],sens:[[.6,'Low'],[1,'Normal'],[1.5,'High']]};
-const SLAB={gfx:'Graphics',stick:'Thumbstick size',hand:'Thumbstick side',invert:'Flight pitch',vib:'Vibration',sound:'Sound',sens:'Camera speed'};
+const SOPTS={gfx:[['auto','Auto'],['low','Low'],['med','Medium'],['high','High']],stick:[['S','Small'],['M','Medium'],['L','Large']],hand:[['left','Stick left'],['right','Stick right']],invert:[[false,'Up = climb'],[true,'Up = dive (pilot)']],vib:[[true,'On'],[false,'Off']],sound:[[true,'On'],[false,'Off']],sens:[[.6,'Low'],[1,'Normal'],[1.5,'High']],nestMk:[[true,'On'],[false,'Off']]};
+const SLAB={gfx:'Graphics',stick:'Thumbstick size',hand:'Thumbstick side',invert:'Flight pitch',vib:'Vibration',sound:'Sound',sens:'Camera speed',nestMk:'Nest markers'};
 function renderSettings(){$('#setList').innerHTML=Object.keys(SOPTS).map(k=>{const o=SOPTS[k].find(x=>x[0]===SET[k])||SOPTS[k][0];return `<button class="btn set" data-k="${k}"><span>${SLAB[k]}</span><b>‹ ${o[1]}${k==='gfx'&&SET.gfx==='auto'?' ('+B.presetName()+')':''} ›</b></button>`}).join('');
  $$('#setList .btn').forEach(b=>b.onclick=()=>cycleSetting(b.dataset.k,1));setFocus()}
 function cycleSetting(k,d){const L=SOPTS[k];let i=L.findIndex(x=>x[0]===SET[k]);i=(i+d+L.length)%L.length;SET[k]=L[i][0];if(k==='gfx'){if(SET.gfx==='auto')SET.autoQ=null;B.applyQuality();G.buildRain();autoT=0;autoF=0}
@@ -64,18 +64,40 @@ $('#bRest').onclick=()=>{const S=G.S;const night=G.isNight();const lin=S.nest.up
 $('#bLarder').onclick=()=>{const S=G.S,f=S.nest.larder.shift();if(!f)return;const v=f.food*(SPECIES[S.sp].diet[f.type]||.5);S.hunger=clamp(S.hunger+v,0,100);SFX.eat();G.toast('+'+Math.round(v)+' food');openNest()};
 $('#bNestBack').onclick=()=>showPanel(null);
 function fade(){const f=$('#fade');f.classList.remove('on');void f.offsetWidth;f.classList.add('on')}
+
+// ---------- nest markers
+function nestList(){const S=G.S,L=[];if(!S)return L;if(S.nest)L.push({x:S.nest.x,y:S.nest.y||0,z:S.nest.z,home:true,id:'home'});for(const b of (S.builds||[]))if(b.type==='outpost')L.push({x:b.x,y:b.y||0,z:b.z,home:false,id:b.id});return L}
+function nestIcon(x,cx,cy,r,home){x.save();x.translate(cx,cy);x.fillStyle=home?'#ffd34d':'#7fd8ff';x.strokeStyle='#1a1208';x.lineWidth=Math.max(1.5,r*.18);
+ x.beginPath();if(home){x.moveTo(0,-r);x.lineTo(r,-.1*r);x.lineTo(.75*r,-.1*r);x.lineTo(.75*r,.85*r);x.lineTo(-.75*r,.85*r);x.lineTo(-.75*r,-.1*r);x.lineTo(-r,-.1*r)}else{x.moveTo(0,-r);x.lineTo(r,0);x.lineTo(0,r);x.lineTo(-r,0)}x.closePath();x.fill();x.stroke();
+ x.fillStyle='#5a3a1c';x.beginPath();x.ellipse(0,home?.35*r:0,r*.45,r*.25,0,0,TAU);x.fill();x.restore()}
+const nmWrap=document.createElement('div');nmWrap.id='nestMk';nmWrap.className='hud';document.body.appendChild(nmWrap);const nmEls={};const _v=new THREE.Vector3();
+function nestMarkers(){const S=G.S;const L=(SET.nestMk!==false&&S)?nestList():[];const seen={};
+ let near=null,nd=1e9;for(const n of L){n.d=hyp(n.x-S.x,n.z-S.z,n.y-S.y);if(n.d<nd){nd=n.d;near=n}}
+ const W_=innerWidth,H_=innerHeight,por=H_>W_;const m={t:por?205:150,b:por?270:110,l:24,r:24};
+ for(const n of L){if(!n.home&&n.d>400&&n!==near)continue;const key='n'+n.id;seen[key]=1;let el=nmEls[key];
+  if(!el){el=document.createElement('div');el.className='nm '+(n.home?'home':'out');el.innerHTML='<i></i><span class="ic">'+(n.home?'🏠':'🪺')+'</span><b></b>';nmWrap.appendChild(el);nmEls[key]=el}
+  _v.set(n.x,n.y+3,n.z).project(camera);let px=(_v.x*.5+.5)*W_,py=(-_v.y*.5+.5)*H_;const behind=_v.z>1;
+  let off=behind||px<m.l||px>W_-m.r||py<m.t||py>H_-m.b;
+  if(off){let dx=px-W_/2,dy=py-H_/2;if(behind){dx=-dx;dy=-dy;if(Math.abs(dy)<1&&Math.abs(dx)<1)dy=1}
+   const hw=W_/2-m.l-(m.r-m.l)/2,cx=W_/2+(m.l-m.r)/2,cy=(m.t+H_-m.b)/2,hh=(H_-m.b-m.t)/2;const sc=Math.min(Math.abs((W_/2-m.r-22)/(dx||1e-6)),Math.abs(hh-22)/Math.abs(dy||1e-6));
+   px=cx+dx*sc;py=cy+dy*sc;el.querySelector('i').style.transform=`rotate(${Math.atan2(dy,dx)}rad) translateX(24px)`}
+  el.classList.toggle('off',off);el.style.transform=`translate(${px.toFixed(1)}px,${py.toFixed(1)}px)`;
+  el.style.opacity=n.d<15?Math.max(0,(n.d-5)/10)*.9:'1';el.querySelector('b').textContent=n.d<1000?Math.round(n.d)+' m':(n.d/1000).toFixed(1)+' km'}
+ for(const k in nmEls)if(!seen[k]){nmEls[k].remove();delete nmEls[k]}}
 // ---------- map
 const mapC=$('#mapC'),mapX=mapC.getContext('2d');
 function openMap(){mapFrom=panel==='pause'?'pause':null;showPanel('map');drawMap(mapX,mapC.width,true)}
 function drawMap(x,s,full){const S=G.S;x.drawImage(W.mapImg,0,0,s,s);const k=s/W.SIZE,P=(wx,wz)=>[(wx+W.HALF)*k,(wz+W.HALF)*k];
- x.lineWidth=Math.max(1,s/200);if(S.nest){const [a,b]=P(S.nest.x,S.nest.z);x.fillStyle='#ffd34d';x.strokeStyle='#000';x.beginPath();x.arc(a,b,s/45,0,TAU);x.fill();x.stroke()}
+ x.lineWidth=Math.max(1,s/200);
  if(full){x.font=`${Math.round(s/30)}px Georgia`;x.fillStyle='rgba(255,240,210,.85)';x.textAlign='center';const lb=[[W.LAKE.x,W.LAKE.z,'Stillwater Lake'],[W.RUINS.x,W.RUINS.z-38,'Old Watchers'],[W.ARCH.x,W.ARCH.z-40,'The Great Arch'],[W.POND.x,W.POND.z+50,'Frog Pond'],[0,-640,'Ironback Mountains']];for(const [a,b,t] of lb){const [u,v]=P(a,b);x.fillText(t,u,v)}}
  if(S.sp==='hawk'||full){x.fillStyle='rgba(255,90,60,.9)';for(const e of G.ents){if(e.type==='fox'||e.type==='wolf'){if(!full||!e.mesh.visible)continue;const [a,b]=P(e.x,e.z);x.fillRect(a-1.5,b-1.5,3,3)}}}
+ for(const n of nestList()){const [a,b]=P(n.x,n.z);const r=s/(full?(n.home?34:46):(n.home?40:55));nestIcon(x,a,b,r,n.home);if(full){const d=Math.round(hyp(n.x-S.x,n.z-S.z));x.font=`bold ${Math.round(s/42)}px Georgia`;x.textAlign='center';x.lineWidth=3;x.strokeStyle='rgba(0,0,0,.8)';x.fillStyle=n.home?'#ffe08a':'#bfeaff';const t=(n.home?'Home ':'Outpost ')+d+' m';x.strokeText(t,a,b+r*2);x.fillText(t,a,b+r*2)}}
+ if(full){x.font=`${Math.round(s/40)}px Georgia`;x.textAlign='left';x.fillStyle='rgba(0,0,0,.55)';x.fillRect(s*.02,s*.02,s*.3,s*.13);nestIcon(x,s*.05,s*.05,s/60,true);nestIcon(x,s*.05,s*.11,s/75,false);x.fillStyle='#fff';x.fillText('Home nest',s*.08,s*.06);x.fillText('Outpost',s*.08,s*.12)}
  const [a,b]=P(S.x,S.z);x.save();x.translate(a,b);x.rotate(-S.yaw);x.fillStyle='#fff';x.strokeStyle='#000';x.beginPath();const r=s/(full?32:16);x.moveTo(0,-r);x.lineTo(r*.6,r*.7);x.lineTo(0,r*.35);x.lineTo(-r*.6,r*.7);x.closePath();x.fill();x.stroke();x.restore()}
 const mini=$('#mini'),miniX=mini.getContext('2d');
 function drawMini(){const S=G.S;const s=mini.width;const zoom=4;miniX.save();miniX.beginPath();miniX.arc(s/2,s/2,s/2,0,TAU);miniX.clip();
  miniX.translate(s/2,s/2);miniX.rotate(cam.yaw);const k=s/W.SIZE*zoom;miniX.drawImage(W.mapImg,(-W.HALF-S.x)*k,(-W.HALF-S.z)*k,W.SIZE*k,W.SIZE*k);
- if(S.nest){miniX.fillStyle='#ffd34d';miniX.strokeStyle='#000';miniX.lineWidth=2;const nx=clamp((S.nest.x-S.x)*k,-s*.45,s*.45),nz=clamp((S.nest.z-S.z)*k,-s*.45,s*.45);miniX.beginPath();miniX.arc(nx,nz,6,0,TAU);miniX.fill();miniX.stroke()}
+ for(const n of nestList().sort((a,b)=>a.home-b.home)){let nx=(n.x-S.x)*k,nz=(n.z-S.z)*k;const L=hyp(nx,nz),R=s*.42;if(L>R){nx*=R/L;nz*=R/L}miniX.save();miniX.translate(nx,nz);miniX.rotate(-cam.yaw);nestIcon(miniX,0,0,n.home?11:8,n.home);miniX.restore()}
  if(S.sp==='hawk'){miniX.fillStyle='#ffcf4a';for(const e of G.ents)if((e.type==='mouse'||e.type==='rabbit')&&e.mesh.visible&&hyp(e.x-S.x,e.z-S.z)<120){miniX.fillRect((e.x-S.x)*k-2,(e.z-S.z)*k-2,4,4)}}
  for(const p of G.pwSpots){if(!G.pwAlive(p))continue;const dx=(p.x-S.x)*k,dz=(p.z-S.z)*k;if(Math.abs(dx)>s*.47||Math.abs(dz)>s*.47)continue;miniX.fillStyle=G.PW[p.k].css;miniX.strokeStyle='#000';miniX.lineWidth=1.5;miniX.beginPath();miniX.arc(dx,dz,4.5,0,TAU);miniX.fill();miniX.stroke()}
  if(window.BUILD)BUILD.drawMini(miniX,k,s);miniX.rotate(-cam.yaw);miniX.rotate(-(S.yaw-cam.yaw));miniX.fillStyle='#fff';miniX.strokeStyle='#000';miniX.lineWidth=2;miniX.beginPath();miniX.moveTo(0,-9);miniX.lineTo(6,7);miniX.lineTo(0,3);miniX.lineTo(-6,7);miniX.closePath();miniX.fill();miniX.stroke();miniX.restore();
@@ -169,7 +191,7 @@ function frame(now){requestAnimationFrame(frame);let dt=Math.min(.05,(now-last)/
  if(G.itemsDirty){G.refreshItems();G.itemsDirty=false}
  if(G.berriesDirty){const bi=W.berryMesh;if(!W.berryOrig)W.berryOrig=bi.instanceMatrix.array.slice();const O=W.berryOrig,A=bi.instanceMatrix.array;for(const b of W.bushes)for(const i of b.bi){if(b.ripe)A.set(O.subarray(i*16,i*16+16),i*16);else A.fill(0,i*16,i*16+16)}bi.instanceMatrix.needsUpdate=true;G.berriesDirty=false}
  for(const it of G.items)if(it.mesh&&it.mesh.visible){it.mesh.userData.sp.material.rotation+=dt;it.mesh.userData.sp.scale.setScalar(.5+Math.sin(now*.004+it.x)*.2)}
- if(!panel&&G.S){hud();if(++miniC%3===0)drawMini()}
+ if(!panel&&G.S){hud();nestMarkers();if(++miniC%3===0)drawMini()}else nmWrap.style.display='none';if(!panel)nmWrap.style.display=''
  const tEl=$('#toast');if(tEl.classList.contains('on')){toastLeft-=dt}
  if(B.getQ().bloom&&window.BLOOM&&BLOOM.ok!==false)BLOOM.render();else renderer.render(scene,camera)}
 let inLock=false,miniC=0,toastLeft=0;
@@ -183,5 +205,5 @@ addEventListener('resize',()=>{B.parkStick()});
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});
 // test hooks
 window.BFW={G,B,showPanel,newGame,cont,openNest,openMap,get panel(){return panel},selIdx:i=>{selIdx=i;renderSelect()},
- step(n,inp,dt){dt=dt||1/30;const I=Object.assign({mx:0,my:0,cx:0,cy:0,diveV:0,brakeV:0},inp||{});for(let i=0;i<n;i++){G.gameTick(dt,I);camTick(dt,I);birdVis(dt,I);I.flapE=I.landE=I.actE=I.abE=I.lockE=I.buildE=I.invE=I.scanE=false}envTick(dt);hud();drawMini()}};
+ step(n,inp,dt){dt=dt||1/30;const I=Object.assign({mx:0,my:0,cx:0,cy:0,diveV:0,brakeV:0},inp||{});for(let i=0;i<n;i++){G.gameTick(dt,I);camTick(dt,I);birdVis(dt,I);I.flapE=I.landE=I.actE=I.abE=I.lockE=I.buildE=I.invE=I.scanE=false}envTick(dt);hud();drawMini();nestMarkers()}};
 })();
