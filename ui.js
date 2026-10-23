@@ -6,7 +6,7 @@ const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const clamp=(v,a,b)=>v<a?a:v>b?b:v,lerp=(a,b,t)=>a+(b-a)*t,hyp=Math.hypot,TAU=Math.PI*2;
 let panel='title',paused=true;let selIdx=0;const cam=G.cam;cam.yaw=0;cam.pitch=.25;
 // ---------- panels & focus nav
-function showPanel(p){panel=p;$$('.panel').forEach(e=>e.classList.toggle('on',e.id==='p-'+p));document.body.classList.toggle('inmenu',!!p);paused=!!p;focusI=0;setFocus();if(p==='select')renderSelect();if(p==='title')$('#bCont').style.display=G.load()?'':'none';if(p==='settings')renderSettings()}
+function showPanel(p){panel=p;$$('.panel').forEach(e=>e.classList.toggle('on',e.id==='p-'+p));document.body.classList.toggle('inmenu',!!p);paused=!!p;focusI=0;if(p==='select'){const L=btns();const i=L.findIndex(b=>b.id==='bStart');if(i>=0)focusI=i}setFocus();if(p==='select')renderSelect();if(p==='title')$('#bCont').style.display=G.load()?'':'none';if(p==='settings')renderSettings()}
 window.showPanel=showPanel;
 let focusI=0;function btns(){const p=$('#p-'+panel);return p?[...p.querySelectorAll('.btn:not([disabled])')].filter(b=>b.offsetParent!==null):[]}
 function setFocus(){const L=btns();L.forEach((b,i)=>b.classList.toggle('foc',i===focusI&&document.body.classList.contains('pad')))}
@@ -30,7 +30,7 @@ $('#bNew').onclick=()=>{if(G.load()&&!confirmNew){confirmNew=true;$('#bNew').tex
 $('#bCont').onclick=cont;$('#selPrev').onclick=()=>{selIdx=(selIdx+4)%5;renderSelect()};$('#selNext').onclick=()=>{selIdx=(selIdx+1)%5;renderSelect()};
 $('#bStart').onclick=()=>newGame(ORDER[selIdx]);$('#bSelBack').onclick=()=>showPanel('title');
 $$('#selDots').forEach(d=>d.addEventListener('click',e=>{const i=[...d.children].indexOf(e.target);if(i>=0){selIdx=i;renderSelect()}}));
-$('#bHow').onclick=()=>showPanel('help');$('#bHelpBack').onclick=()=>showPanel(G.S&&G.S.mode!=='dead'&&prevPanel==='pause'?'pause':'title');let prevPanel='title';
+$('#bHow').onclick=()=>showPanel('help');$('#bHelpBack').onclick=()=>showPanel(G.S&&G.S.mode!=='dead'&&prevPanel===null?null:G.S&&G.S.mode!=='dead'&&prevPanel==='pause'?'pause':'title');let prevPanel='title';
 $('#bSettings').onclick=()=>{prevPanel='title';showPanel('settings')};$('#bSetBack').onclick=()=>showPanel(prevPanel);
 $('#bResume').onclick=()=>showPanel(null);$('#bPSet').onclick=()=>{prevPanel='pause';showPanel('settings')};$('#bPHelp').onclick=()=>{prevPanel='pause';showPanel('help')};
 $('#bQuit').onclick=()=>{G.save();showPanel('title')};$('#bPMap').onclick=()=>openMap();
@@ -177,10 +177,10 @@ setInterval(()=>{const t=$('#toast');if(t.classList.contains('on')&&(t._s=(t._s|
 new MutationObserver(()=>{$('#toast')._s=0}).observe($('#toast'),{childList:true,characterData:true,subtree:true});
 // boot
 B.resize();B.layoutTouch();G.refreshItems();G.populate(-150,120);
-$('#loading').style.display='none';showPanel('title');requestAnimationFrame(frame);
+$('#loading').style.display='none';showPanel('title');requestAnimationFrame(frame);(function(){let n=0;const t0=performance.now();const f=()=>{if(++n>=8&&performance.now()-t0>3000)localStorage.removeItem('bfw-boot');else requestAnimationFrame(f)};requestAnimationFrame(f)})();if(window.__bfwFellBack)setTimeout(()=>{try{window.toast('Graphics set to Low after a failed start — change in Settings')}catch(e){}},1500);
 addEventListener('visibilitychange',()=>{if(document.hidden&&G.S){G.save();if(!panel)showPanel('pause')}});
 addEventListener('resize',()=>{B.parkStick()});
-if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
+if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});
 // test hooks
 window.BFW={G,B,showPanel,newGame,cont,openNest,openMap,get panel(){return panel},selIdx:i=>{selIdx=i;renderSelect()},
  step(n,inp,dt){dt=dt||1/30;const I=Object.assign({mx:0,my:0,cx:0,cy:0,diveV:0,brakeV:0},inp||{});for(let i=0;i<n;i++){G.gameTick(dt,I);camTick(dt,I);birdVis(dt,I);I.flapE=I.landE=I.actE=I.abE=I.lockE=I.buildE=I.invE=I.scanE=false}envTick(dt);hud();drawMini()}};

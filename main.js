@@ -12,10 +12,16 @@ const PRESETS={low:{pr:.75,shadows:0,seg:192,hdr:0,detail:0,trees:.42,grass:0,gf
  med:{pr:1.25,shadows:1024,seg:320,hdr:1,detail:1,trees:.7,grass:1,gfield:9000,clouds:1,life:.75,bloom:0,fog:.003,view:620,aa:true,rain:800},
  high:{pr:2,shadows:2048,seg:512,hdr:1,detail:2,trees:1,grass:1,gfield:22000,clouds:2,life:1,bloom:1,fog:.0024,view:900,aa:true,rain:1500}};
 function presetName(){return SET.gfx==='auto'?(SET.autoQ||(isTouch?'med':'high')):SET.gfx}
+if(localStorage.getItem('bfw-boot')==='1'){/* last start never reached gameplay: drop to Low */SET.gfx='low';SET.autoQ=null;saveSet();window.__bfwFellBack=1}
+localStorage.setItem('bfw-boot','1');
 let Q=PRESETS[presetName()];
 // ---------- renderer / scene
 const canvas=$('#c');
-const renderer=new THREE.WebGLRenderer({canvas,antialias:Q.aa||!isTouch,powerPreference:'high-performance'});
+let renderer=null;
+for(const o of [{antialias:Q.aa||!isTouch,powerPreference:'high-performance'},{antialias:false,powerPreference:'default'},{antialias:false,powerPreference:'low-power',precision:'mediump'}]){
+ try{renderer=new THREE.WebGLRenderer(Object.assign({canvas,failIfMajorPerformanceCaveat:false},o));break}catch(e){console.warn('WebGL attempt failed',o,e&&e.message)}}
+if(!renderer){localStorage.removeItem('bfw-boot');if(window.BFW_FAIL)BFW_FAIL('webgl');throw new Error('BFW: WebGL unavailable')}
+canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();if(SET.gfx!=='low'){SET.gfx='low';SET.autoQ=null;saveSet();setTimeout(()=>location.reload(),300)}else if(window.BFW_FAIL)BFW_FAIL('lost')},false);
 renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1;renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 const scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x9fb8d2,Q.fog);
