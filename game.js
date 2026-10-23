@@ -26,8 +26,12 @@ function mkSquirrel(){const g=new THREE.Group(),m=M(0x9a5a2e),pm=M(0xe0cfb0);con
  const h=ell(.045,1,1,1.2,m);h.position.set(0,.14,-.09);g.add(h);for(const s of[-1,1]){const e=ell(.015,1,1.6,.6,m);e.position.set(s*.025,.19,-.08);g.add(e)}
  const t=ell(.06,1,2.6,1,m);t.position.set(0,.17,.12);t.rotation.x=-.35;g.add(t);g.userData.tail=t;return g}
 function mkFish(){const g=new THREE.Group();const m=M(0x8c9aa0,{metalness:.6,roughness:.3});g.add(ell(.1,.5,.8,2,m));const t=new THREE.Mesh(new THREE.ConeGeometry(.08,.14,12),m);t.rotation.x=Math.PI/2;t.position.z=.25;t.scale.x=.3;g.add(t);return g}
-function mkSongbird(){const g=new THREE.Group(),m=M([0x7a5a3a,0x3a5a8a,0x9a8a3a][Math.floor(rnd()*3)]);g.add(ell(.05,1,.9,1.6,m));const h=ell(.035,1,1,1,m);h.position.set(0,.02,-.07);g.add(h);
- const wg=[];for(const s of[-1,1]){const w=new THREE.Mesh(new THREE.PlaneGeometry(.14,.06).translate(.07,0,0).rotateX(-Math.PI/2),M(0x4a3a2a,{side:THREE.DoubleSide}));w.scale.x=s;g.add(w);wg.push(w)}g.userData.w=wg;return g}
+const SBC=[[0x8a5a34,0xd9a066],[0x3a5a9a,0xd8d0c0],[0xb0902a,0x5a4a2a],[0xa0302a,0x6a5040],[0x5a6a4a,0xe0d8b0]];
+function mkSongbird(){const g=new THREE.Group(),c=SBC[Math.floor(rnd()*SBC.length)],m=M(c[0]),b2=M(c[1]);const body=ell(.06,1,.9,1.5,m);g.add(body);const bel=ell(.05,.9,.75,1.2,b2);bel.position.set(0,-.018,-.01);g.add(bel);
+ const h=ell(.042,1,1,1,m);h.position.set(0,.04,-.075);g.add(h);const bk=new THREE.Mesh(new THREE.ConeGeometry(.012,.04,8).rotateX(-Math.PI/2),M(0xe0b040));bk.position.set(0,.035,-.12);g.add(bk);
+ for(const s of[-1,1]){const e=new THREE.Mesh(new THREE.SphereGeometry(.008,8,6),M(0x050505));e.position.set(s*.026,.05,-.098);g.add(e)}
+ const tl=new THREE.Mesh(new THREE.BoxGeometry(.05,.008,.09).translate(0,0,.045),m);tl.position.set(0,.01,.07);tl.rotation.x=-.25;g.add(tl);
+ const wg=[];for(const s of[-1,1]){const w=new THREE.Mesh(new THREE.SphereGeometry(.05,12,6).scale(1.9,.18,1).translate(.085,0,0),M(c[0]==0x3a5a9a?0x2a4a8a:0x4a3a2a,{side:THREE.DoubleSide}));w.position.set(s*.02,.02,0);w.scale.x=s;g.add(w);wg.push(w)}g.userData.w=wg;g.scale.setScalar(1.7);return g}
 function mkCarcass(){const g=new THREE.Group();const m=M(0x5b3a2a),bm=M(0xd8ceb8,{roughness:.6}),red=M(0x5e1414,{roughness:.5});const b=ell(.35,1,.55,2,m);b.position.y=.18;g.add(b);
  for(let i=0;i<5;i++){const r=new THREE.Mesh(new THREE.TorusGeometry(.26,.025,8,20,Math.PI),bm);r.position.set(0,.22,-.3+i*.14);r.rotation.y=Math.PI/2;g.add(r)}const f=ell(.2,1.2,.3,1.6,red);f.position.set(.1,.12,0);g.add(f);
  for(const [x,z,a] of[[.2,.5,.4],[-.2,.55,-.3],[.25,-.5,.2]]){const l=new THREE.Mesh(new THREE.CylinderGeometry(.03,.025,.6,12),m);l.rotation.z=1.4;l.rotation.y=a;l.position.set(x,.08,z);g.add(l)}return g}
@@ -50,7 +54,7 @@ const _m4=new THREE.Matrix4(),_q=new THREE.Quaternion(),_v=new THREE.Vector3(),_
 function refreshItems(){let ks=0,km=0;for(const it of items){if(!it.alive){if(it.mesh)it.mesh.visible=false;continue}
  if(it.type==='stick'){for(let j=0;j<3;j++){_e.set(0,it.rot+j*.7,j*.05);_q.setFromEuler(_e);_v.set(it.x+j*.12-.12,it.y+j*.03,it.z+(j-1)*.1);_s.set(1+j*.1,1,1);_m4.compose(_v,_q,_s);stickIM.setMatrixAt(ks++,_m4)}}
  else if(it.type==='moss'){_q.identity();_v.set(it.x,it.y,it.z);_s.set(1,.45,1);_m4.compose(_v,_q,_s);mossIM.setMatrixAt(km++,_m4)}
- else if(it.mesh)it.mesh.visible=S&&S.sp==='crow'}
+ else if(it.mesh)it.mesh.visible=true}
  stickIM.count=ks;mossIM.count=km;stickIM.instanceMatrix.needsUpdate=true;mossIM.instanceMatrix.needsUpdate=true;stickIM.computeBoundingSphere();mossIM.computeBoundingSphere()}
 // ---------- creatures
 const ents=[];
@@ -60,17 +64,21 @@ function spawnNear(type,px,pz,minD,maxD){for(let k=0;k<30;k++){const a=rnd()*TAU
   if(type==='fish'){const L=rnd()<.8?W.LAKE:W.POND;const r=L.r*.75*Math.sqrt(rnd()),b=rnd()*TAU;const fx=L.x+Math.cos(b)*r,fz=L.z+Math.sin(b)*r;if(H(fx,fz)<-1)return [fx,fz];continue}
   if(type==='rabbit'&&W.forestMask(x,z)>.55)continue;if(type==='squirrel'&&W.forestMask(x,z)<.45)continue;if(validGround(x,z))return [x,z]}return null}
 function addEnt(type,x,z){const r=ROLE[type];const m=r.mk();scene.add(m);const e={type,x,z,y:H(x,z),yaw:rnd()*TAU,mesh:m,st:'idle',t:rnd()*3,vx:0,vz:0,alive:true,hide:0,cd:0,bites:3,ph:rnd()*9};
- if(type==='fish'){e.y=-.45;e.jump=0}if(type==='songbird'){e.cx=x;e.cz=z;e.cy=H(x,z)+12+rnd()*10;e.rad=8+rnd()*8;e.ang=rnd()*TAU;e.y=e.cy}ents.push(e);return e}
+ if(type==='fish'){e.y=-.45;e.jump=0}if(type==='songbird'){e.ox=(rnd()-.5)*3;e.oz=(rnd()-.5)*3;e.oy=rnd()*.8;e.vx=0;e.vy=0;e.vz=0;e.flee=0;e.react=-1;e.y=H(x,z)+.05}ents.push(e);return e}
+const SBF=new Set();
+function mkFlock(x,z){const ps=W.nearPerches(x,z,40).filter(q=>q.kind==='tree'||q.kind==='branch');const q=ps.length?ps[Math.floor(rnd()*ps.length)]:{x,z,y:H(x,z)+8};
+ const F={hx:q.x,hy:q.y+.1,hz:q.z,st:rnd()<.5?'perch':'ground',t:6+rnd()*8,ang:rnd()*TAU,gx:q.x,gz:q.z};pickGround(F);return F}
+function pickGround(F){for(let k=0;k<12;k++){const a=rnd()*TAU,d=5+rnd()*14;const x=F.hx+Math.cos(a)*d,z=F.hz+Math.sin(a)*d;const h=H(x,z);if(h>.8&&W.normalAt(x,z).y>.85){F.gx=x;F.gz=z;return}}F.gx=F.hx+4;F.gz=F.hz}
 function populate(px,pz){
- const LD=(window.LIFE?LIFE.density:.75);const want={mouse:14,rabbit:Math.round(10*LD)+2,squirrel:Math.round(8*LD)+2,songbird:12,fish:16,carrion:6,fox:2,wolf:2};
+ const LD=(window.LIFE?LIFE.density:.75);const want={mouse:14,rabbit:Math.round(10*LD)+2,squirrel:Math.round(8*LD)+2,songbird:24,fish:16,carrion:6,fox:2,wolf:2};
  for(const t in want){let have=ents.filter(e=>e.type===t);for(const e of have){if(hyp(e.x-px,e.z-pz)>(t==='fish'?600:260)){e.alive=false}}
   have=have.filter(e=>e.alive);
   let n=want[t]-have.length;while(n-->0){const p=spawnNear(t,px,pz,t==='fox'||t==='wolf'?110:t==='carrion'?60:25,t==='carrion'?240:170);if(!p)break;
-   if(t==='songbird'){const c=addEnt(t,p[0],p[1]);for(let k=1;k<6&&n>0;k++,n--){const e=addEnt(t,p[0],p[1]);e.cx=c.cx;e.cz=c.cz;e.cy=c.cy+rnd()*3;e.rad=c.rad+rnd()*3;e.ang=c.ang+k*.4}}else addEnt(t,p[0],p[1])}}
+   if(t==='songbird'){const F=mkFlock(p[0],p[1]);for(let k=0;k<6;k++){const e=addEnt(t,F.hx,F.hz);e.F=F;e.x=F.hx+e.ox*.6;e.z=F.hz+e.oz*.6;e.y=F.hy+e.oy*.5}n-=5}else addEnt(t,p[0],p[1])}}
  for(let i=ents.length-1;i>=0;i--)if(!ents[i].alive){scene.remove(ents[i].mesh);ents.splice(i,1)}}
 // ---------- nest
 const nestG=new THREE.Group();scene.add(nestG);
-function buildNestMesh(){while(nestG.children.length)nestG.remove(nestG.children[0]);if(!S.nest)return;const n=S.nest,u=n.up;const r=W.rng(5);
+function buildNestMesh(){if(window.BUILD){BUILD.rebuild();return}while(nestG.children.length)nestG.remove(nestG.children[0]);if(!S.nest)return;const n=S.nest,u=n.up;const r=W.rng(5);
  const s=Math.max(1,SPECIES[S.sp].size)*1.1;const tw=[];const ring=(R,y0,hgt,cnt)=>{for(let i=0;i<cnt;i++){const a=i/cnt*TAU+r()*.3;const g=new THREE.CylinderGeometry(.02,.03,.8+r()*.5,4);g.rotateZ(Math.PI/2).rotateY(-a+Math.PI/2+(r()-.5)*.8).rotateX((r()-.5)*.5);
   const rr=R*(1+(r()-.5)*.2);g.translate(Math.cos(a)*rr,y0+r()*hgt,Math.sin(a)*rr);tw.push(g)}};
  ring(.55*s,0,.22*s,70);ring(.4*s,-.05,.1,30);
@@ -91,12 +99,12 @@ const UPG=[
 // ---------- state
 let S=null;const SAVEK='bfw-save-v1';
 function newState(sp){const p=W.perches.filter(q=>q.kind==='tree'&&hyp(q.x-(-150),q.z-120)<120&&W.trees[q.tree].type!==0);const st=p.length?p[Math.floor(rnd()*p.length)]:{x:-150,y:H(-150,120)+10,z:120};
- return {v:2,pw:{},pwr:{},sp,x:st.x,y:st.y,z:st.z,yaw:rnd()*TAU,pitch:0,roll:0,speed:0,vy:0,mode:'perch',perch:st,hp:SPECIES[sp].hp,hunger:80,thirst:75,stam:SPECIES[sp].stam,inv:{stick:0,moss:0,shiny:0},hold:null,
+ return {v:3,pw:{},pwr:{},sp,x:st.x,y:st.y,z:st.z,yaw:rnd()*TAU,pitch:0,roll:0,speed:0,vy:0,mode:'perch',perch:st,hp:SPECIES[sp].hp,hunger:80,thirst:75,stam:SPECIES[sp].stam,inv:(window.BUILD?BUILD.emptyInv():{stick:0,moss:0,shiny:0}),builds:[],hold:null,
   nest:null,day:1,t:.3,storm:0,stormT:0,nextStorm:1.4+rnd(),obj:0,ab:0,abT:0,stats:{caught:0,flown:0,days:0},seenTut:false,played:0}}
 function save(){if(!S||S.mode==='dead')return;const o=Object.assign({},S);o.perch=null;try{localStorage.setItem(SAVEK,JSON.stringify(o))}catch(e){}}
-function migrate(o){if(!o||!SPECIES[o.sp])return null;if(o.v===1){o.v=2;o.pw={};o.pwr={};o.flags=o.flags||{};o.stats=o.stats||{caught:0,flown:0,days:0};o.inv=o.inv||{stick:0,moss:0,shiny:0}}if(o.v!==2)return null;o.pw=o.pw||{};o.pwr=o.pwr||{};return o}
+function migrate(o){if(!o||!SPECIES[o.sp])return null;if(o.v===1){o.v=2;o.pw={};o.pwr={};o.flags=o.flags||{};o.stats=o.stats||{caught:0,flown:0,days:0};o.inv=o.inv||{stick:0,moss:0,shiny:0}}if(o.v===2&&window.BUILD){BUILD.migrate(o);o.v=3}if(o.v!==3)return null;o.pw=o.pw||{};o.pwr=o.pwr||{};if(window.BUILD)BUILD.fix(o);return o}
 function load(){try{const o=migrate(JSON.parse(localStorage.getItem(SAVEK)));if(o)return o}catch(e){}return null}
-function maxHp(){return SPECIES[S.sp].hp+(S.nest&&S.nest.up.lining?25:0)}
+function maxHp(){return SPECIES[S.sp].hp+(S.nest&&S.nest.up.lining?25:0)+(window.BUILD?BUILD.hpBonus():0)}
 function maxSt(){return SPECIES[S.sp].stam*(S.nest&&S.nest.up.lookout?1.2:1)}
 function nestCost(){return Math.round(8*SPECIES[S.sp].buildDisc)}
 function costOf(u){const c=Object.assign({},u.cost);if(S.sp==='crow'&&c.stick)c.stick=Math.ceil(c.stick*.6);return c}
@@ -111,9 +119,9 @@ const OBJ=[
  {t:()=>`Gather sticks under trees (${S.inv.stick}/${nestCost()})`,done:()=>S.inv.stick>=nestCost()||S.nest},
  {t:'Perch on a tree and build your nest: ACT (X)',done:()=>!!S.nest},
  {t:'Rest in your nest (ACT at the nest)',done:()=>S.flags&&S.flags.rested},
- {t:'Upgrade your nest (moss is found on rocks and logs)',done:()=>S.nest&&Object.values(S.nest.up).some(Boolean)},
+ {t:'Build the next nest stage: walls (BUILD menu: Y / B key / 🔨)',done:()=>S.nest&&((S.nest.stage||1)>=2||Object.values(S.nest.up).some(Boolean))},
  {t:'Survive until day 4',done:()=>S.day>=4},
- {t:'Build every nest upgrade',done:()=>S.nest&&UPG.every(u=>S.nest.up[u.id])},
+ {t:()=>`Finish your nest (roof + lining) and build 3 structures (${(S.builds||[]).length}/3)`,done:()=>S.nest&&(S.nest.stage||1)>=4&&(S.builds||[]).length>=3},
  {t:'Survive 10 days in the wild',done:()=>S.day>=11},
  {t:'You are a legend of the Blackfeather Wilds. Keep surviving!',done:()=>false}];
 // ---------- HUD helpers
@@ -138,7 +146,7 @@ const marks=[];for(let i=0;i<24;i++){const s=new THREE.Sprite(new THREE.SpriteMa
 const fwd=new THREE.Vector3();let flapAcc=0,flapSnd=0,lastSave=0,stormFlash=0,cam={yawOff:0,pitchOff:0,idle:0,pos:new THREE.Vector3(),init:false},msgCD={};
 function once(k,m,t){if((msgCD[k]||0)>0)return;msgCD[k]=t||8;toast(m)}
 function gameTick(dt,I){
- const sp=SPECIES[S.sp];S.played+=dt;for(const k in msgCD)msgCD[k]-=dt;
+ const sp=SPECIES[S.sp];S.played+=dt;for(const k in msgCD)msgCD[k]-=dt;if(window.BUILD)BUILD.tick(dt,I);
  // time & weather
  const night=isNight();const daySpeed=1/(night?240:600)*0.75; // full cycle ~ 9 min
  const pt=S.t;S.t+=dt*daySpeed*(night?2.6:1)*0.75*1.6;if(S.t>=1){S.t-=1}if(pt<.27&&S.t>=.27&&S.played>5){S.day++;toast('Dawn — Day '+S.day,true);save()}
@@ -148,9 +156,9 @@ function gameTick(dt,I){
  // meters
  const flying=S.mode==='fly'||S.mode==='landing';const resting=S.mode==='perch';const owlNight=S.sp==='owl'&&night;
  const hm=(flying?1.5:resting?.7:1)*(S.nest&&S.nest.up.larder?.85:1);S.hunger=clamp(S.hunger-dt*.2*hm,0,100);S.thirst=clamp(S.thirst-dt*.27*(flying?1.35:resting?.7:1)*(night?.8:1.1),0,100);
- const sheltered=(S.mode==='perch'&&S.perch&&(S.perch.kind==='tree'||S.perch.kind==='branch'||S.perch.nest))&&(!S.perch.nest||true);const inNest=atNest();const fullShelter=inNest&&S.nest.up.walls;
+ const sheltered=(S.mode==='perch'&&S.perch&&(S.perch.kind==='tree'||S.perch.kind==='branch'||S.perch.nest))&&(!S.perch.nest||true);const inNest=atNest();const fullShelter=(inNest&&S.nest.up.walls)||(window.BUILD&&BUILD.shelter());
  let dmg=0;if(S.hunger<=0)dmg+=1.1;if(S.thirst<=0)dmg+=1.4;
- if(S.storm>.5&&!fullShelter&&!(sheltered&&W.trees[S.perch.tree||0]&&W.trees[S.perch.tree].type!==2))dmg+=.55;
+ if(S.storm>.5&&!fullShelter&&!(sheltered&&W.trees[S.perch.tree||0]&&W.trees[S.perch.tree].type!==2))dmg+=.55*(window.BUILD?BUILD.stormMul():1);
  if(night&&S.storm>.5&&!inNest&&S.sp!=='owl')dmg+=.2;
  if(dmg>0)S.hp-=dt*dmg;else if(S.hunger>55&&S.thirst>55)S.hp=Math.min(maxHp(),S.hp+dt*(resting?1.2:.5));
  if(S.hunger<=0)once('hun','You are starving! Hunt or scavenge.');if(S.thirst<=0)once('thi','You are dying of thirst! Find water.');
@@ -219,6 +227,7 @@ function flyTick(dt,I,sp){
 }
 function findPerch(range){let best=null,bd=1e9;forward();for(const p of W.nearPerches(S.x,S.z,range)){const dx=p.x-S.x,dz=p.z-S.z,dy=p.y-S.y;const d=hyp(dx,dz,dy);if(d>range)continue;
  const dot=(dx*fwd.x+dz*fwd.z)/(hyp(dx,dz)||1);const score=d*(1.4-dot*.6)+Math.max(0,dy)*1.5;if(score<bd){bd=score;best=p}}
+ if(window.BUILD){const q=BUILD.findPerch(range);if(q&&q.d<bd+4){best=q.p;bd=q.d}}
  if(S.nest){const d=hyp(S.nest.x-S.x,S.nest.z-S.z,S.nest.y-S.y);if(d<range*1.2&&d<bd+6)best=nestPerch()}return best}
 function nestPerch(){return {x:S.nest.x,y:S.nest.y+.15,z:S.nest.z,kind:'tree',tree:S.nest.tree,nest:true}}
 let LD=null;function startLanding(p){LD={sx:S.x,sy:S.y,sz:S.z,p,t:0,dur:clamp(hyp(p.x-S.x,p.z-S.z,p.y-S.y)/Math.max(10,S.speed),.6,2.6)};S.mode='landing';S.autoLand=false}
@@ -245,7 +254,7 @@ function strike(onPlayer){stormFlash=1;setTimeout(SFX.thunder,onPlayer?0:600+rnd
 function die(){S.mode='dead';S.hp=0;save();localStorage.removeItem(SAVEK);if(S.nest){const k=JSON.stringify(Object.assign({},S,{perch:null}));localStorage.setItem(SAVEK+'-dead',k)}
  const hasNest=!!S.nest;$('#deadMsg').textContent=`You survived ${S.day} day${S.day>1?'s':''} and caught ${S.stats.caught} meal${S.stats.caught===1?'':'s'}.`;
  $('#bRespawn').style.display=hasNest?'':'none';showPanel('dead')}
-function respawn(){const o=migrate(JSON.parse(localStorage.getItem(SAVEK+'-dead')));if(!o)return newGame(S.sp);S=o;S.mode='perch';S.perch=nestPerch();S.x=S.perch.x;S.y=S.perch.y;S.z=S.perch.z;S.hp=maxHp()*.6;S.hunger=Math.max(S.hunger,50);S.thirst=Math.max(S.thirst,50);S.stam=maxSt();S.inv={stick:0,moss:0,shiny:0};S.hold=null;S.t=.27;S.stormT=0;S.storm=0;
+function respawn(){const o=migrate(JSON.parse(localStorage.getItem(SAVEK+'-dead')));if(!o)return newGame(S.sp);S=o;S.mode='perch';S.perch=nestPerch();S.x=S.perch.x;S.y=S.perch.y;S.z=S.perch.z;S.hp=maxHp()*.6;S.hunger=Math.max(S.hunger,50);S.thirst=Math.max(S.thirst,50);S.stam=maxSt();S.inv=(window.BUILD?BUILD.emptyInv():{stick:0,moss:0,shiny:0});S.hold=null;S.t=.27;S.stormT=0;S.storm=0;
  localStorage.removeItem(SAVEK+'-dead');setBird(S.sp);buildNestMesh();save();showPanel(null);toast('You wake in your nest, hurt but alive.',true)}
 // ---------- context actions
 function near(list,r,f){let best=null,bd=r;for(const o of list){if(f&&!f(o))continue;const d=hyp(o.x-S.x,o.z-S.z,(o.y||S.y)-S.y);if(d<bd){bd=d;best=o}}return best}
@@ -255,38 +264,40 @@ let ctx=null;
 function contextTick(dt,I){ctx=null;const sp=SPECIES[S.sp];
  if(S.mode==='dead'){prompt(null);return}
  const onLand=S.mode==='ground',perched=S.mode==='perch',low=S.mode==='fly'&&S.y-gH(S.x,S.z)<2.6;
- if(S.hold){ctx={k:'eat',l:'Eat '+S.hold.name}; if(atNest()&&S.nest.up.larder&&S.nest.larder.length<4&&S.hunger>70)ctx={k:'store',l:'Store '+S.hold.name+' in larder'}}
+ if(S.hold){ctx={k:'eat',l:'Eat '+S.hold.name}; if(atNest()&&S.nest.up.larder&&S.nest.larder.length<(window.BUILD?BUILD.larderCap():4)&&S.hunger>70)ctx={k:'store',l:'Store '+S.hold.name+' in larder'}}
  else if(atNest())ctx={k:'nest',l:'Nest: rest & upgrades'};
  else if(perched&&S.perch&&(S.perch.kind==='tree'||S.perch.kind==='branch')&&!S.nest&&S.inv.stick>=nestCost())ctx={k:'build',l:'Build nest here ('+nestCost()+' sticks)'};
  else if(perched&&S.perch&&(S.perch.kind==='tree'||S.perch.kind==='branch')&&!S.nest&&S.obj>=4)ctx={k:'nobuild',l:'Need '+nestCost()+' sticks to build'};
  if(!ctx&&(onLand||low)){const cap=sp.carry;const tot=S.inv.stick+S.inv.moss;
-  const it=near(items,onLand?1.9:2.6,o=>o.alive&&(o.type!=='shiny'||S.sp==='crow'));
-  if(it){ctx=tot>=cap&&it.type!=='shiny'?{k:'full',l:'Carrying all you can ('+cap+')'}:{k:'pick',o:it,l:'Pick up '+({stick:'sticks',moss:'moss',shiny:'shiny trinket'})[it.type]}}}
+  if(!window.BUILD){const it=near(items,onLand?1.9:2.6,o=>o.alive&&(o.type!=='shiny'||S.sp==='crow'));
+  if(it){ctx=tot>=cap&&it.type!=='shiny'?{k:'full',l:'Carrying all you can ('+cap+')'}:{k:'pick',o:it,l:'Pick up '+({stick:'sticks',moss:'moss',shiny:'shiny trinket'})[it.type]}}}}
+ if(window.BUILD){const b=BUILD.ctx(ctx,onLand,perched,low);if(b)ctx=b}
  if(!ctx&&onLand){
   const c=near(ents,2.2,e=>e.type==='carrion'&&e.bites>0);if(c)ctx=diet('carrion')?{k:'carrion',o:c,l:'Scavenge carcass'}:{k:'no',l:SPECIES[S.sp].short+'s won\'t eat carrion'};
   if(!ctx){const b=near(W.bushes,2.3,b=>b.ripe);if(b)ctx=diet('berries')?{k:'berries',o:b,l:'Eat berries'}:{k:'no',l:'Raptors don\'t eat berries'}}
   if(!ctx){const l=near(W.logs,3,l=>l.grubs);if(l&&diet('grubs'))ctx={k:'grubs',o:l,l:'Dig grubs from the log'}}
-  if(!ctx){const m=near(ents,1.6,e=>(e.type==='mouse'||e.type==='rabbit'||e.type==='squirrel')&&e.hide<=0);if(m&&canTake(m))ctx={k:'pounce',o:m,l:'Pounce!'}}
+  if(!ctx){const m=near(ents,1.6,e=>(e.type==='mouse'||e.type==='rabbit'||e.type==='squirrel'||(e.type==='songbird'&&e.flee<=0&&e.y-gH(e.x,e.z)<1))&&e.hide<=0);if(m&&canTake(m))ctx={k:'pounce',o:m,l:'Pounce!'}}
   if(!ctx&&waterNear())ctx={k:'drink',l:'Drink'}}
- prompt(ctx?(ctx.k==='no'||ctx.k==='full'||ctx.k==='nobuild'?'<i>'+ctx.l+'</i>':'<b class="kx">X</b> '+ctx.l):null);
- if(I.actE&&ctx)doAct(ctx)}
+ prompt(ctx?(ctx.k==='no'||ctx.k==='full'||ctx.k==='nobuild'?'<i>'+ctx.l+'</i>':'<b class="kx">'+(document.body.classList.contains('pad')?'X':document.body.classList.contains('touch')?'ACT':'E')+'</b> '+ctx.l):null);
+ if(I.actE&&ctx&&!(window.BUILD&&BUILD.placing()))doAct(ctx)}
 function canTake(e){if(e.type==='rabbit'&&SPECIES[S.sp].size<1.2&&!pwOn('talon'))return false;return diet(e.type==='squirrel'?'mouse':e.type)>0}
 function doAct(c){const sp=SPECIES[S.sp];
  switch(c.k){
  case 'eat':{const v=S.hold.food*diet(S.hold.type==='squirrel'?'mouse':S.hold.type)*(S.hold.x2?2:1);S.hunger=clamp(S.hunger+v,0,100);if(S.hold.type==='fish')S.thirst=clamp(S.thirst+6,0,100);S.hold=null;SFX.eat();S.flags=Object.assign(S.flags||{},{ate:1});toast('+'+Math.round(v)+' food');break}
  case 'store':S.nest.larder.push(S.hold);S.hold=null;SFX.pick();toast('Stored in larder ('+S.nest.larder.length+'/4)');break;
  case 'nest':openNest();break;
- case 'build':S.inv.stick-=nestCost();const p=S.perch;S.nest={x:p.x,y:p.y,z:p.z,tree:p.tree,up:{},store:{stick:0,moss:0,shiny:0},larder:[]};S.perch=nestPerch();buildNestMesh();SFX.build();B.rumble(.4,.4,300);toast('Nest built! This is your home and save point.',true);save();break;
+ case 'build':S.inv.stick-=nestCost();const p=S.perch;S.nest={x:p.x,y:p.y,z:p.z,tree:p.tree,up:{},stage:1,store:(window.BUILD?BUILD.emptyInv():{stick:0,moss:0,shiny:0}),larder:[]};S.perch=nestPerch();buildNestMesh();SFX.build();B.rumble(.4,.4,300);toast('Nest built! This is your home and save point.',true);save();break;
  case 'pick':{const it=c.o;it.alive=false;it.t=150+rnd()*90;itemsDirty=true;if(it.type==='stick'){S.inv.stick=Math.min(sp.carry-S.inv.moss,S.inv.stick+(S.sp==='crow'||S.sp==='eagle'?3:2));SFX.pick()}else if(it.type==='moss'){S.inv.moss++;SFX.pick()}else{S.inv.shiny++;SFX.shiny();toast('A shiny! ('+S.inv.shiny+')')}break}
- case 'carrion':{c.o.bites--;const v=c.o.bites>=0?40*diet('carrion')*.5:0;S.hunger=clamp(S.hunger+v,0,100);SFX.eat();S.flags=Object.assign(S.flags||{},{ate:1});toast('+'+Math.round(v)+' food');if(c.o.bites<=0){c.o.alive=false}break}
+ case 'carrion':{c.o.bites--;const v=c.o.bites>=0?40*diet('carrion')*.5:0;S.hunger=clamp(S.hunger+v,0,100);SFX.eat();S.flags=Object.assign(S.flags||{},{ate:1});toast('+'+Math.round(v)+' food');if(window.BUILD)BUILD.scavenge(c.o);if(c.o.bites<=0){c.o.alive=false}break}
  case 'berries':{c.o.ripe=0;c.o.t=120;berriesDirty=true;const v=12*diet('berries');S.hunger=clamp(S.hunger+v,0,100);S.thirst=clamp(S.thirst+5,0,100);SFX.eat();S.flags=Object.assign(S.flags||{},{ate:1});toast('+'+Math.round(v)+' food');break}
  case 'grubs':{c.o.grubs=0;c.o.t=150;const v=10*diet('grubs');S.hunger=clamp(S.hunger+v,0,100);SFX.eat();S.flags=Object.assign(S.flags||{},{ate:1});toast('+'+Math.round(v)+' food');break}
  case 'pounce':catchPrey(c.o);break;
+  default:if(window.BUILD)BUILD.act(c);break;
  case 'drink':S.thirst=clamp(S.thirst+30,0,100);SFX.drink();S.flags=Object.assign(S.flags||{},{drank:1});toast('+30 water');break}}
 function catchPrey(e){if(window.HUNT)HUNT.caught(e);e.alive=false;scene.remove(e.mesh);const i=ents.indexOf(e);if(i>=0)ents.splice(i,1);const r=ROLE[e.type];
  S.hold={type:e.type,food:r.food,name:({mouse:'mouse',rabbit:'rabbit',squirrel:'squirrel',fish:'fish',songbird:'songbird'})[e.type],x2:pwOn('talon')};S.stats.caught++;SFX.eat();B.rumble(.6,.3,180);toast('Caught a '+S.hold.name+'! Press ACT to eat.');
  while(held.children.length)held.remove(held.children[0]);const m=r.mk();held.add(m)}
-function arriveNest(){const st=S.nest.store;let d=0;for(const k of ['stick','moss','shiny']){st[k]+=S.inv[k];d+=S.inv[k];S.inv[k]=0}if(d)toast('Dropped off '+d+' item'+(d>1?'s':'')+' at the nest');save()}
+function arriveNest(){if(window.BUILD){BUILD.autoStore(true);save();return}const st=S.nest.store;let d=0;for(const k of ['stick','moss','shiny']){st[k]+=S.inv[k];d+=S.inv[k];S.inv[k]=0}if(d)toast('Dropped off '+d+' item'+(d>1?'s':'')+' at the nest');save()}
 function tryFish(splash){for(const e of ents){if(e.type!=='fish')continue;const d=hyp(e.x-S.x,e.z-S.z);const r=S.sp==='eagle'?3:1.6;if(d<r&&(S.sp==='eagle'||e.jump>0)&&diet('fish')){catchPrey(e);S.y=.8;S.pitch=.4;S.speed=Math.max(S.speed*.5,7);SFX.splash();return true}}return false}
 // ---------- power-ups
 const PW={gold:{name:'Golden Feather',icon:'🪶',col:0xffc83a,css:'#ffc83a',dur:45,desc:'Speed boost'},plume:{name:'Storm Plume',icon:'🌩️',col:0x7fb8ff,css:'#7fb8ff',dur:40,desc:'Endless stamina'},
@@ -313,7 +324,7 @@ function pwVis(T){for(const s of pwSpots){const a=pwAlive(s);s.g.visible=a;if(!a
  const dd=S?hyp(s.x-S.x,s.z-S.z):999;s.beam.visible=dd>12}}
 // ---------- entities tick
 let popT=0;
-function entTick(dt){popT-=dt;if(popT<=0){popT=4;populate(S.x,S.z)}
+function entTick(dt){SBF.clear();popT-=dt;if(popT<=0){popT=4;populate(S.x,S.z)}
  const night=isNight(),owl=S.sp==='owl',pl=S.mode;const pAbove=S.y-gH(S.x,S.z);const diving=S.mode==='fly'&&S.speed>16;
  for(const e of ents){const dx=S.x-e.x,dz=S.z-e.z,d=hyp(dx,dz);e.t-=dt;e.cd-=dt;const m=e.mesh;
   if(d>300){m.visible=false;continue}m.visible=e.hide<=0;
@@ -342,10 +353,19 @@ function entTick(dt){popT-=dt;if(popT<=0){popT=4;populate(S.x,S.z)}
   case 'fish':{e.t-=0;if(e.jump>0){e.jump-=dt;const k=1-e.jump/1.1;e.y=-.4+Math.sin(k*Math.PI)*1.6;m.rotation.x=lerp(.9,-.9,k);e.x+=Math.sin(e.yaw)*-2*dt;e.z+=Math.cos(e.yaw)*-2*dt;if(e.jump<=0){SFX.splash();e.y=-.45}}
    else{if(e.t<=0){e.t=2+rnd()*3;e.yaw+=(rnd()-.5)*2;if(rnd()<.3&&d<140){e.jump=1.1}}const nx=e.x-Math.sin(e.yaw)*1.2*dt,nz=e.z-Math.cos(e.yaw)*1.2*dt;if(H(nx,nz)<-1){e.x=nx;e.z=nz}else e.yaw+=Math.PI;m.rotation.x=0;e.y=-.45}
    m.position.set(e.x,e.y,e.z);m.rotation.y=e.yaw;if(S.mode==='fly'&&S.y<1.6&&(S.sp==='eagle'||e.jump>0))tryFish();break}
-  case 'songbird':{const scared=d<12&&S.mode==='fly'&&!(S.sp==='falcon'&&S.speed>20);if(scared){e.cy+=dt*6;e.rad+=dt*4}else{e.cy=lerp(e.cy,H(e.cx,e.cz)+14,dt*.1);e.rad=lerp(e.rad,10,dt*.1)}
-   e.ang+=dt*(scared?1.6:.7)*(e.rad>0?9/e.rad:1);const px=e.x,pz=e.z;e.x=e.cx+Math.cos(e.ang)*e.rad;e.z=e.cz+Math.sin(e.ang)*e.rad;e.y=e.cy+Math.sin(e.ang*3+e.ph)*1.5;
-   m.position.set(e.x,e.y,e.z);m.rotation.y=Math.atan2(-(e.x-px),-(e.z-pz));const w=Math.sin(S.played*30+e.ph)*.8;m.userData.w[0].rotation.z=-w;m.userData.w[1].rotation.z=w;
-   if(S.mode==='fly'&&diet('songbird')){const r=(S.sp==='falcon'?2.2:1.1)*SPECIES[S.sp].size;if(hyp(dx,dz,S.y-e.y)<r){catchPrey(e);return}}break}
+  case 'songbird':{const F=e.F||(e.F=mkFlock(e.x,e.z));if(!SBF.has(F)){SBF.add(F);F.t-=dt;if(F.t<=0){F.st=F.st==='perch'?'ground':F.st==='ground'?'fly':'perch';F.t=F.st==='fly'?5+rnd()*4:9+rnd()*9;if(F.st==='ground')pickGround(F)}F.ang+=dt*.9}
+   const shadow=pwOn('shadow'),pf=S.mode==='fly'||S.mode==='landing';const fearR=shadow?0:(owl&&night?6:diving?8:pf?13:7);const pd=hyp(dx,dz,S.y-e.y);
+   if(e.flee<=0&&pd<fearR){if(e.react<0)e.react=.15+rnd()*.45;else{e.react-=dt;if(e.react<=0){e.flee=3+rnd();e.react=-1;const k=1/Math.max(.5,hyp(dx,dz));e.vx=-dx*k*8.5+(rnd()-.5)*3;e.vz=-dz*k*8.5+(rnd()-.5)*3;e.vy=4.5+rnd()*2;if(d<40)SFX.nav&&0}}}
+   else if(pd>=fearR&&e.flee<=0)e.react=-1;
+   let flying=true;const ox=e.x,oz=e.z;
+   if(e.flee>0){e.flee-=dt;e.vy=Math.max(e.vy-dt*2.5,.5);e.x+=e.vx*dt;e.z+=e.vz*dt;e.y+=e.vy*dt;e.y=Math.min(e.y,gH(e.x,e.z)+28);if(e.flee<=0){F.st='fly';F.t=Math.max(F.t,4)}}
+   else{let tx,ty,tz;if(F.st==='perch'){tx=F.hx+e.ox*.6;tz=F.hz+e.oz*.6;ty=F.hy+e.oy*.5}else if(F.st==='ground'){tx=F.gx+e.ox*1.4;tz=F.gz+e.oz*1.4;ty=H(tx,tz)+.06}else{const a=F.ang+e.ox;tx=F.hx+Math.cos(a)*(8+e.oz);tz=F.hz+Math.sin(a)*(8+e.oz);ty=F.hy+5+e.oy*2}
+    const ddx=tx-e.x,ddy=ty-e.y,ddz=tz-e.z,dd=hyp(ddx,ddz,ddy);const sp=Math.min(dd,6*dt);if(dd>.01){e.x+=ddx/dd*sp;e.y+=ddy/dd*sp;e.z+=ddz/dd*sp}
+    flying=dd>.25||F.st==='fly';if(!flying&&F.st==='ground'){e.y=H(e.x,e.z)+.06+(Math.sin(S.played*9+e.ph)>.9?.05:0)}}
+   if(Math.abs(e.x)>720||Math.abs(e.z)>720){e.alive=false;scene.remove(m);break}
+   m.position.set(e.x,e.y,e.z);if(hyp(e.x-ox,e.z-oz)>.002)m.rotation.y=Math.atan2(-(e.x-ox),-(e.z-oz));else if(!flying&&Math.sin(S.played*.7+e.ph)>.97)m.rotation.y+=dt*3;
+   const w=flying?Math.sin(S.played*32+e.ph)*.9:.15;m.userData.w[0].rotation.z=-w;m.userData.w[1].rotation.z=w;m.rotation.x=(!flying&&F.st==='ground'&&Math.sin(S.played*4+e.ph)>.5)?.5:0;
+   if(S.mode==='fly'&&diet('songbird')){const r=(1.4+SPECIES[S.sp].size*.5)*(S.sp==='falcon'?1.4:1)*(pwOn('talon')?1.5:1);if(hyp(dx,dz,S.y-e.y)<r){catchPrey(e);return}}break}
   case 'carrion':m.position.set(e.x,H(e.x,e.z),e.z);m.rotation.y=e.yaw;m.scale.setScalar(.6+e.bites*.15);break}
  }
  // markers
@@ -353,6 +373,6 @@ function entTick(dt){popT-=dt;if(popT<=0){popT=4;populate(S.x,S.z)}
  if(show){for(const e of ents){if(mi>=marks.length)break;const crowMode=S.sp==='crow';if(crowMode)continue;if(!(e.type==='mouse'||e.type==='rabbit'||e.type==='squirrel'||e.type==='songbird'||e.type==='fish'))continue;if(!e.mesh.visible)continue;const d=hyp(e.x-S.x,e.z-S.z);if(d>140)continue;marks[mi].position.set(e.x,e.y+1.2,e.z);marks[mi].visible=true;mi++}
   if(S.sp==='crow')for(const it of items){if(mi>=marks.length)break;if(it.type==='shiny'&&it.alive&&hyp(it.x-S.x,it.z-S.z)<160){marks[mi].position.set(it.x,it.y+1.4,it.z);marks[mi].visible=true;mi++}}}
  for(;mi<marks.length;mi++)marks[mi].visible=false}
-window.__G={canTake,diet,PW,PWK,pwSpots,pwOn,pwPick,pwVis,pwAlive,migrate,get S(){return S},set S(v){S=v},ents,items,newState,save,load,setBird,buildNestMesh,gameTick,startLanding,findPerch,catchPrey,doAct,UPG,costOf,nestCost,maxHp,maxSt,OBJ,isNight,skyAt,sunInfo,strike,respawn,die,
+window.__G={items,refreshItems:()=>{itemsDirty=true},prompt,canTake,diet,PW,PWK,pwSpots,pwOn,pwPick,pwVis,pwAlive,migrate,get S(){return S},set S(v){S=v},ents,items,newState,save,load,setBird,buildNestMesh,gameTick,startLanding,findPerch,catchPrey,doAct,UPG,costOf,nestCost,maxHp,maxSt,OBJ,isNight,skyAt,sunInfo,strike,respawn,die,
  hurt,toast,prompt,refreshItems,populate,takeOff,atNest,nestPerch,get bird(){return bird},held,cam,rain,buildRain,marks,get ctx(){return ctx},set itemsDirty(v){itemsDirty=v},get itemsDirty(){return itemsDirty},get berriesDirty(){return berriesDirty},set berriesDirty(v){berriesDirty=v},stormFlashRef:()=>stormFlash,setStormFlash:v=>stormFlash=v,arriveNest};
 })();

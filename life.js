@@ -44,7 +44,7 @@ function wingBirdGeo(span,len){const parts=[ellG(len*.28,1,.85,1.9)];const w=new
  w.setAttribute('position',new THREE.Float32BufferAttribute([0,0,-len*.25, span,0,len*.05, 0,0,len*.25, 0,0,-len*.25, 0,0,len*.25, -span,0,len*.05],3));w.computeVertexNormals();w.setAttribute('uv',new THREE.Float32BufferAttribute(new Array(12).fill(0),2));parts.push(w);
  const t=new THREE.BufferGeometry();t.setAttribute('position',new THREE.Float32BufferAttribute([0,0,len*.2, len*.18,0,len*.6, -len*.18,0,len*.6],3));t.computeVertexNormals();t.setAttribute('uv',new THREE.Float32BufferAttribute(new Array(6).fill(0),2));parts.push(t);return W.mergeGeos(parts)}
 function mkFlockSet(n,geo,mat){const im=new THREE.InstancedMesh(geo,mat,n);im.frustumCulled=false;scene.add(im);return {im,b:[],n}}
-const song=mkFlockSet(60,wingBirdGeo(.16,.18),M(0xffffff,{side:THREE.DoubleSide,roughness:.9}));
+const song=mkFlockSet(60,wingBirdGeo(.16,.18),M(0xffffff,{side:THREE.DoubleSide,roughness:.9}));song.im.visible=false;song.im.count=0;
 const crows=mkFlockSet(14,wingBirdGeo(.55,.5),M(0x15161a,{side:THREE.DoubleSide,roughness:.6,metalness:.2}));
 for(let i=0;i<song.n;i++){song.im.setColorAt(i,C.set([0x7a5a3a,0x8a6a42,0x5a4a3a,0x6a7a8a,0xa08050][i%5]));song.b.push({ph:rnd()*TAU,o:rnd()*TAU,r:4+rnd()*9,h:rnd()*4,f:i%3})}
 for(let i=0;i<crows.n;i++)crows.b.push({ph:rnd()*TAU,o:rnd()*TAU,r:3+rnd()*10,h:rnd()*6});
@@ -116,7 +116,7 @@ let sndT=3;function tickSound(dt,p){if(!B.AU.ctx||!SET.sound||p.mode==='menu')re
  if(n){if(nearW&&r<.5)snd.frog();else if(r<.75)snd.owl();else if(r<.82)snd.wolf()}
  else{if(fm>.5&&r<.3)snd.woodpecker();else if(r<.55)snd.warble();else if(r<.7)snd.caw(.7);else if(r<.8)snd.cuckoo();else if(nearW&&r<.95)snd.quack()}}
 // ================= main
-let T=0;function tick(dt){T+=dt;const p=player();tickHerds(dt,p,T);tickFlock(flocks[0],dt,p,T,14,5);tickFlock(flocks[1],dt,p,T,18,6);tickFlock(flocks[2],dt,p,T,11,5);
+let T=0;function tick(dt){T+=dt;const p=player();tickHerds(dt,p,T);/* v5: decorative songbird flocks replaced by catchable songbirds in game.js */
  song.im.visible=!night();crows.im.visible=!night();tickFlock(crowF,dt,p,T,55,7);if(!night()){crowF.caw-=dt;if(crowF.caw<=0){crowF.caw=14+rnd()*20;const d=hyp(crowF.x-p.x,crowF.z-p.z);if(d<160)snd.caw(1-d/160)}}
  tickDucks(dt,p,T);tickRaptors(dt,p,T);tickButterflies(dt,p,T);tickFireflies(dt,p,T);tickLeaves(dt,p,T);tickSound(dt,p)}
 function setDensity(d){DENS=d;buildHerds();buildDucks();buildRaptors()}

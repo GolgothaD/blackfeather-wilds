@@ -10,7 +10,8 @@ function showPanel(p){panel=p;$$('.panel').forEach(e=>e.classList.toggle('on',e.
 window.showPanel=showPanel;
 let focusI=0;function btns(){const p=$('#p-'+panel);return p?[...p.querySelectorAll('.btn:not([disabled])')].filter(b=>b.offsetParent!==null):[]}
 function setFocus(){const L=btns();L.forEach((b,i)=>b.classList.toggle('foc',i===focusI&&document.body.classList.contains('pad')))}
-function menuInput(I){if(!panel)return;const L=btns();if(!L.length)return;
+window.__focusI=()=>focusI;window.__setFocusI=i=>{focusI=i;setFocus()};window.__btns=()=>btns();window.__panel=()=>panel;
+function menuInput(I){if(!panel)return;const L=btns();if(window.BUILD&&BUILD.panelInput(panel,I,L,focusI))return;if(!L.length)return;
  if(panel==='select'){if(I.leftN){selIdx=(selIdx+ORDER.length-1)%ORDER.length;SFX.nav();renderSelect()}if(I.rightN){selIdx=(selIdx+1)%ORDER.length;SFX.nav();renderSelect()}}
  if(I.downN||(panel!=='select'&&I.rightN&&false)){focusI=(focusI+1)%L.length;SFX.nav();setFocus()}if(I.upN){focusI=(focusI+L.length-1)%L.length;SFX.nav();setFocus()}
  if(panel==='settings'&&(I.leftN||I.rightN)){const b=L[focusI];if(b&&b.dataset.k){cycleSetting(b.dataset.k,I.leftN?-1:1)}}
@@ -77,7 +78,7 @@ function drawMini(){const S=G.S;const s=mini.width;const zoom=4;miniX.save();min
  if(S.nest){miniX.fillStyle='#ffd34d';miniX.strokeStyle='#000';miniX.lineWidth=2;const nx=clamp((S.nest.x-S.x)*k,-s*.45,s*.45),nz=clamp((S.nest.z-S.z)*k,-s*.45,s*.45);miniX.beginPath();miniX.arc(nx,nz,6,0,TAU);miniX.fill();miniX.stroke()}
  if(S.sp==='hawk'){miniX.fillStyle='#ffcf4a';for(const e of G.ents)if((e.type==='mouse'||e.type==='rabbit')&&e.mesh.visible&&hyp(e.x-S.x,e.z-S.z)<120){miniX.fillRect((e.x-S.x)*k-2,(e.z-S.z)*k-2,4,4)}}
  for(const p of G.pwSpots){if(!G.pwAlive(p))continue;const dx=(p.x-S.x)*k,dz=(p.z-S.z)*k;if(Math.abs(dx)>s*.47||Math.abs(dz)>s*.47)continue;miniX.fillStyle=G.PW[p.k].css;miniX.strokeStyle='#000';miniX.lineWidth=1.5;miniX.beginPath();miniX.arc(dx,dz,4.5,0,TAU);miniX.fill();miniX.stroke()}
- miniX.rotate(-cam.yaw);miniX.rotate(-(S.yaw-cam.yaw));miniX.fillStyle='#fff';miniX.strokeStyle='#000';miniX.lineWidth=2;miniX.beginPath();miniX.moveTo(0,-9);miniX.lineTo(6,7);miniX.lineTo(0,3);miniX.lineTo(-6,7);miniX.closePath();miniX.fill();miniX.stroke();miniX.restore();
+ if(window.BUILD)BUILD.drawMini(miniX,k,s);miniX.rotate(-cam.yaw);miniX.rotate(-(S.yaw-cam.yaw));miniX.fillStyle='#fff';miniX.strokeStyle='#000';miniX.lineWidth=2;miniX.beginPath();miniX.moveTo(0,-9);miniX.lineTo(6,7);miniX.lineTo(0,3);miniX.lineTo(-6,7);miniX.closePath();miniX.fill();miniX.stroke();miniX.restore();
  miniX.strokeStyle='rgba(230,220,190,.6)';miniX.lineWidth=3;miniX.beginPath();miniX.arc(s/2,s/2,s/2-1.5,0,TAU);miniX.stroke();
  // north marker
  const na=-cam.yaw-Math.PI/2;miniX.fillStyle='#ffd9a0';miniX.font='bold 13px sans-serif';miniX.textAlign='center';miniX.textBaseline='middle';miniX.fillText('N',s/2+Math.cos(na)*(s/2-10),s/2+Math.sin(na)*(s/2-10))}
@@ -85,7 +86,7 @@ function drawMini(){const S=G.S;const s=mini.width;const zoom=4;miniX.save();min
 function hud(){const S=G.S;const set=(id,v,m)=>{const e=$(id);e.style.width=clamp(v/m*100,0,100)+'%';e.parentNode.classList.toggle('low',v/m<.25)};
  set('#mHp',S.hp,G.maxHp());set('#mFood',S.hunger,100);set('#mWater',S.thirst,100);set('#mSt',S.stam,G.maxSt());
  const h=Math.floor(S.t*24),mi=Math.floor((S.t*24-h)*60/15)*15;$('#clock').innerHTML=`Day ${S.day} · ${((h+11)%12+1)}:${String(mi).padStart(2,'0')} ${h<12?'AM':'PM'}${S.storm>.2?' · <b>Storm</b>':''}`;
- $('#inv').innerHTML=`<span title="sticks">🪵 ${S.inv.stick}</span><span title="moss">🌿 ${S.inv.moss}</span>${S.sp==='crow'||S.inv.shiny?`<span title="shinies">✨ ${S.inv.shiny}</span>`:''}<span class="cap">/${SPECIES[S.sp].carry}</span>${S.hold?`<span class="hold">🍖 ${S.hold.name}</span>`:''}`;
+ if(window.BUILD){const h=BUILD.hudInv();const e=$('#inv');if(e._h!==h){e.innerHTML=h;e._h=h}}else $('#inv').innerHTML=`<span title="sticks">🪵 ${S.inv.stick}</span><span title="moss">🌿 ${S.inv.moss}</span>${S.sp==='crow'||S.inv.shiny?`<span title="shinies">✨ ${S.inv.shiny}</span>`:''}<span class="cap">/${SPECIES[S.sp].carry}</span>${S.hold?`<span class="hold">🍖 ${S.hold.name}</span>`:''}`;
  const o=G.OBJ[S.obj];$('#obj').textContent=typeof o.t==='function'?o.t():o.t;
  const sp=SPECIES[S.sp];const ab=$('#bAb');ab.querySelector('small').textContent=sp.ability;ab.classList.toggle('cd',S.ab>0&&S.sp!=='owl');ab.style.setProperty('--cd',S.ab>0?(S.ab/sp.abCd):0);
  const fl=S.mode==='fly'||S.mode==='landing';$('#bLand').querySelector('small').textContent=fl?'Land':'—';$('#bLand').classList.toggle('dim',!fl);$('#bFlap').querySelector('small').textContent=fl?'Flap':'Take off';$('#bDive').classList.toggle('dim',!fl);
@@ -161,7 +162,7 @@ let last=performance.now(),fpsA=60;window.__fps=()=>fpsA;
 function frame(now){requestAnimationFrame(frame);let dt=Math.min(.05,(now-last)/1000);last=now;fpsA=lerp(fpsA,1/Math.max(dt,.001),.05);
  const I=B.readInput();
  if(panel){menuInput(I);inLock=true}if(!panel&&inLock){if(I.flap||I.land||I.act||I.ab||I.dive)for(const k of ['flap','land','act','ab','dive','flapE','landE','actE','abE','diveE'])I[k]=false;else inLock=false}
- if(!panel&&G.S&&G.S.mode!=='dead'){if(I.pauseE){showPanel('pause');}else if(I.mapE){openMap()}else{G.gameTick(dt,I);camTick(dt,I);autoQ(dt)}}
+ if(!panel&&G.S&&G.S.mode!=='dead'){if(I.pauseE){showPanel('pause');}else if(I.mapE){openMap()}else if(window.BUILD&&I.buildE){BUILD.openBuild()}else if(window.BUILD&&I.invE){BUILD.openInv()}else{G.gameTick(dt,I);camTick(dt,I);autoQ(dt)}}
  else if(panel==='map'&&I.mapE)showPanel(mapFrom);
  if(G.S&&(panel===null||panel==='pause'||panel==='nest'||panel==='map'||panel==='dead'||(panel==='help'&&prevPanel!=='title')||(panel==='settings'&&prevPanel==='pause'))){birdVis(dt,panel?{}:I);if(panel){camTick(0.016,{cx:0,cy:0})}}else menuCam(dt);
  tt+=dt;envTick(dt);
@@ -182,5 +183,5 @@ addEventListener('resize',()=>{B.parkStick()});
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 // test hooks
 window.BFW={G,B,showPanel,newGame,cont,openNest,openMap,get panel(){return panel},selIdx:i=>{selIdx=i;renderSelect()},
- step(n,inp,dt){dt=dt||1/30;const I=Object.assign({mx:0,my:0,cx:0,cy:0,diveV:0,brakeV:0},inp||{});for(let i=0;i<n;i++){G.gameTick(dt,I);camTick(dt,I);birdVis(dt,I);I.flapE=I.landE=I.actE=I.abE=I.lockE=false}envTick(dt);hud();drawMini()}};
+ step(n,inp,dt){dt=dt||1/30;const I=Object.assign({mx:0,my:0,cx:0,cy:0,diveV:0,brakeV:0},inp||{});for(let i=0;i<n;i++){G.gameTick(dt,I);camTick(dt,I);birdVis(dt,I);I.flapE=I.landE=I.actE=I.abE=I.lockE=I.buildE=I.invE=I.scanE=false}envTick(dt);hud();drawMini()}};
 })();

@@ -55,7 +55,7 @@ function rumble(s,w,d){if(!SET.vib)return;const p=padObj();if(p&&p.vibrationActu
 const K={};addEventListener('keydown',e=>{if(e.code==='Tab')e.preventDefault();K[e.code]=true;auInit()});addEventListener('keyup',e=>{K[e.code]=false});
 let padIdx=null;addEventListener('gamepadconnected',e=>{padIdx=e.gamepad.index;document.body.classList.add('pad');(window.toast||(()=>{}))('Controller connected')});
 addEventListener('gamepaddisconnected',()=>{padIdx=null;document.body.classList.remove('pad')});
-function padObj(){const ps=navigator.getGamepads?navigator.getGamepads():[];if(padIdx!=null&&ps[padIdx])return ps[padIdx];for(const p of ps)if(p&&p.connected){padIdx=p.index;document.body.classList.add('pad');return p}return null}
+function padObj(){const ps=navigator.getGamepads?navigator.getGamepads():[];if(padIdx!=null&&ps[padIdx])return ps[padIdx];for(const p of ps)if(p&&p.connected){padIdx=p.index;if(!document.body.classList.contains('pad')){document.body.classList.add('pad');window.__setHint&&window.__setHint()}return p}return null}
 const TI={mx:0,my:0,cx:0,cy:0,flap:false,dive:false,brake:false,tap:{}};// touch input
 // desktop: pointer-lock mouse look, LMB flap, RMB dive, controller/keyboard hint
 if(!isTouch){const locked=()=>document.pointerLockElement===canvas;
@@ -63,8 +63,8 @@ if(!isTouch){const locked=()=>document.pointerLockElement===canvas;
  addEventListener('mouseup',e=>{if(e.button===0)TI.flap=false;if(e.button===2)TI.dive=false});canvas.addEventListener('contextmenu',e=>e.preventDefault());
  addEventListener('mousemove',e=>{if(!locked())return;const k=.035*(SET.sens||1);TI.cx+=e.movementX*k;TI.cy+=e.movementY*k*(SET.invert?-1:1)});
  const hint=document.createElement('div');hint.id='ctlHint';document.body.appendChild(hint);
- const setHint=()=>{hint.innerHTML=document.body.classList.contains('pad')?'🎮 <b>Controller</b> · LS move · RS look · A flap · B land · X act · Y keen eye · LB/RS-click lock prey · RT dive · LT brake · Start pause':
-  '⌨ <b>WASD</b> move · <b>click</b> for mouse look · <b>Space/LMB</b> flap · <b>Shift/RMB</b> dive · <b>Tab/MMB</b> lock prey · <b>E</b> act · <b>Q</b> land · <b>R</b> ability · <b>M</b> map · <b>Esc</b> pause &nbsp;|&nbsp; 🎮 Xbox pad: <b>press any button</b> to connect'};
+ const setHint=()=>{hint.innerHTML=document.body.classList.contains('pad')?'🎮 LS move · RS look · A flap · B land · X act · RB skill · Y build · View bag · LS-click scan · LB lock · RT dive · LT brake · ↑ map':
+  '⌨ WASD steer · Space flap · Shift dive · Q land · E act · R skill · B build · I bag · F scan · Tab lock · M map · Esc pause · or plug in a controller'};
  setHint();addEventListener('gamepadconnected',()=>{setHint();hint.classList.add('flash');setTimeout(()=>hint.classList.remove('flash'),1500)});addEventListener('gamepaddisconnected',()=>{document.body.classList.remove('pad');padIdx=null;setHint()});
  window.__setHint=setHint}
 const prevB={};let I={};
@@ -72,9 +72,9 @@ const dz=v=>Math.abs(v)<.16?0:(v-Math.sign(v)*.16)/.84;
 function readInput(){const p=padObj();const b=n=>!!(p&&p.buttons[n]&&p.buttons[n].pressed);const bv=n=>p&&p.buttons[n]?p.buttons[n].value:0;
  let mx=0,my=0,cx=0,cy=0;if(p){mx=dz(p.axes[0]||0);my=dz(p.axes[1]||0);cx=dz(p.axes[2]||0);cy=dz(p.axes[3]||0)}
  if(K.KeyA||K.ArrowLeft)mx-=1;if(K.KeyD||K.ArrowRight)mx+=1;if(K.KeyW||K.ArrowUp)my-=1;if(K.KeyS||K.ArrowDown)my+=1;
- if(K.KeyJ)cx-=1;if(K.KeyL)cx+=1;if(K.KeyI)cy-=1;if(K.KeyK)cy+=1;
+ if(K.KeyJ)cx-=1;if(K.KeyL)cx+=1;
  mx+=TI.mx;my+=TI.my;cx+=TI.cx;cy+=TI.cy;TI.cx=0;TI.cy=0;
- const held={flap:b(0)||b(5)||K.Space||TI.flap,dive:bv(7)>.3||K.ShiftLeft||TI.dive,brake:bv(6)>.3||K.ControlLeft,land:b(1)||K.KeyQ,act:b(2)||K.KeyE,ab:b(3)||K.KeyR,pause:b(9)||K.Escape||K.KeyP,map:b(8)||K.KeyM,
+ const held={flap:b(0)||K.Space||TI.flap,dive:bv(7)>.3||K.ShiftLeft||TI.dive,brake:bv(6)>.3||K.ControlLeft,land:b(1)||K.KeyQ,act:b(2)||K.KeyE,ab:b(5)||K.KeyR,pause:b(9)||K.Escape||K.KeyP,map:b(12)||K.KeyM,build:b(3)||K.KeyB,inv:b(8)||K.KeyI,scan:b(10)||b(13)||K.KeyF,
   up:b(12),down:b(13),left:b(14),right:b(15),lb:b(4),rb:b(5),lock:b(4)||b(11)||K.Tab};
  const n={mx:clamp(mx,-1,1),my:clamp(my,-1,1),cx,cy,diveV:Math.max(bv(7),held.dive?1:0),brakeV:bv(6)};
  for(const k in held){n[k]=held[k];n[k+'E']=held[k]&&!prevB[k];prevB[k]=held[k]}
