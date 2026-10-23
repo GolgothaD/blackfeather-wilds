@@ -112,7 +112,7 @@ function camTick(dt,I){const S=G.S;const sz=SPECIES[S.sp].size;const fl=S.mode==
 let envT=99,pmrem=null,envRT=null;const skyScene=new THREE.Scene();
 function envTick(dt){const S=G.S||{t:.3,storm:0,x:0,z:0,y:0};const k=G.skyAt(S.t);const st=S.storm||0;const si=G.sunInfo(S.t);
  const nightV=S.sp==='owl'&&S.nv&&G.isNight();
- const u=B.sky.material.uniforms;const grey=new THREE.Color(0x4a5058);u.top.value.copy(k.top).lerp(grey.clone().multiplyScalar(.6),st*.8);u.hor.value.copy(k.hor).lerp(grey,st*.75);u.sunCol.value.copy(k.sc);u.night.value=clamp(-si.el*3,0,1);u.storm.value=st;
+ const u=B.sky.material.uniforms;const grey=new THREE.Color(0x4a5058);u.top.value.copy(k.top).lerp(grey.clone().multiplyScalar(.6),st*.8);u.hor.value.copy(k.hor).lerp(grey,st*.75);u.sunCol.value.copy(k.sc);u.night.value=clamp(-si.el*3,0,1);u.storm.value=st;if(u.uH){const e=clamp((si.el-.05)/.3,0,1);u.uH.value=W.hdr?e*e*(3-2*e)*(1-st)*.85:0}
  const day=si.el>-.05;const sd=new THREE.Vector3(Math.cos(si.az)*.8,Math.max(.08,Math.abs(si.el)),.45).normalize();
  if(day){u.sunDir.value.set(Math.cos(si.az)*.8,si.el,.45).normalize()}else u.sunDir.value.set(-Math.cos(si.az)*.8,-si.el,-.3).normalize();
  B.sun.color.copy(k.sc);B.sun.intensity=k.si*(1-st*.7)*(nightV?3:1);B.sun.position.set(S.x+sd.x*200,S.y+sd.y*200,S.z+sd.z*200);B.sun.target.position.set(S.x,S.y,S.z);
@@ -182,5 +182,5 @@ addEventListener('resize',()=>{B.parkStick()});
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 // test hooks
 window.BFW={G,B,showPanel,newGame,cont,openNest,openMap,get panel(){return panel},selIdx:i=>{selIdx=i;renderSelect()},
- step(n,inp,dt){dt=dt||1/30;const I=Object.assign({mx:0,my:0,cx:0,cy:0,diveV:0,brakeV:0},inp||{});for(let i=0;i<n;i++){G.gameTick(dt,I);camTick(dt,I);birdVis(dt,I);I.flapE=I.landE=I.actE=I.abE=false}envTick(dt);hud();drawMini()}};
+ step(n,inp,dt){dt=dt||1/30;const I=Object.assign({mx:0,my:0,cx:0,cy:0,diveV:0,brakeV:0},inp||{});for(let i=0;i<n;i++){G.gameTick(dt,I);camTick(dt,I);birdVis(dt,I);I.flapE=I.landE=I.actE=I.abE=I.lockE=false}envTick(dt);hud();drawMini()}};
 })();

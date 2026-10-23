@@ -8,9 +8,9 @@ const isTouch=('ontouchstart' in window)||navigator.maxTouchPoints>0;
 // ---------- settings
 const SET=Object.assign({gfx:'auto',stick:'L',hand:'left',invert:false,vib:true,sound:true,sens:1,autoQ:null},JSON.parse(localStorage.getItem('bfw-settings')||'{}'));
 function saveSet(){localStorage.setItem('bfw-settings',JSON.stringify(SET))}
-const PRESETS={low:{pr:.75,shadows:0,seg:128,trees:.42,grass:0,gfield:0,clouds:0,life:.45,bloom:0,fog:.0042,view:430,aa:false,rain:350},
- med:{pr:1.25,shadows:1024,seg:180,trees:.7,grass:1,gfield:9000,clouds:1,life:.75,bloom:0,fog:.003,view:620,aa:false,rain:800},
- high:{pr:2,shadows:2048,seg:250,trees:1,grass:1,gfield:22000,clouds:2,life:1,bloom:1,fog:.0024,view:900,aa:true,rain:1500}};
+const PRESETS={low:{pr:.75,shadows:0,seg:192,hdr:0,detail:0,trees:.42,grass:0,gfield:0,clouds:0,life:.45,bloom:0,fog:.0042,view:430,aa:false,rain:350},
+ med:{pr:1.25,shadows:1024,seg:320,hdr:1,detail:1,trees:.7,grass:1,gfield:9000,clouds:1,life:.75,bloom:0,fog:.003,view:620,aa:true,rain:800},
+ high:{pr:2,shadows:2048,seg:512,hdr:1,detail:2,trees:1,grass:1,gfield:22000,clouds:2,life:1,bloom:1,fog:.0024,view:900,aa:true,rain:1500}};
 function presetName(){return SET.gfx==='auto'?(SET.autoQ||(isTouch?'med':'high')):SET.gfx}
 let Q=PRESETS[presetName()];
 // ---------- renderer / scene
@@ -20,8 +20,8 @@ renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 const scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x9fb8d2,Q.fog);
 const camera=new THREE.PerspectiveCamera(62,1,.1,5000);
-const sky=W.makeSky(scene);
-const sun=new THREE.DirectionalLight(0xffffff,2.5);sun.shadow.bias=-.0004;sun.shadow.normalBias=.04;scene.add(sun,sun.target);
+W.maxAniso=Math.min(Q.detail?16:4,renderer.capabilities.getMaxAnisotropy()||4);W.Q0=Q;const sky=W.makeSky(scene);
+const sun=new THREE.DirectionalLight(0xffffff,2.5);sun.shadow.bias=-.0004;sun.shadow.normalBias=.12;scene.add(sun,sun.target);
 const hemi=new THREE.HemisphereLight(0xbfd4ff,0x3a3020,.6);scene.add(hemi);
 const flash=new THREE.AmbientLight(0xcfd8ff,0);scene.add(flash);
 function applyQuality(){Q=PRESETS[presetName()];renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,Q.pr));
@@ -52,19 +52,19 @@ const SFX={flap:()=>noise(.16,700,.22),caw:()=>{for(let i=0;i<3;i++){tone('sawto
 function abilitySfx(id){({crow:SFX.caw,hawk:SFX.kee,falcon:SFX.kee,owl:SFX.hoot,eagle:SFX.screech})[id]()}
 function rumble(s,w,d){if(!SET.vib)return;const p=padObj();if(p&&p.vibrationActuator&&p.vibrationActuator.playEffect){try{p.vibrationActuator.playEffect('dual-rumble',{duration:d||200,strongMagnitude:s,weakMagnitude:w})}catch(e){}}else if(navigator.vibrate&&isTouch){try{navigator.vibrate(d||60)}catch(e){}}}
 // ---------- input
-const K={};addEventListener('keydown',e=>{K[e.code]=true;auInit()});addEventListener('keyup',e=>{K[e.code]=false});
+const K={};addEventListener('keydown',e=>{if(e.code==='Tab')e.preventDefault();K[e.code]=true;auInit()});addEventListener('keyup',e=>{K[e.code]=false});
 let padIdx=null;addEventListener('gamepadconnected',e=>{padIdx=e.gamepad.index;document.body.classList.add('pad');(window.toast||(()=>{}))('Controller connected')});
 addEventListener('gamepaddisconnected',()=>{padIdx=null;document.body.classList.remove('pad')});
 function padObj(){const ps=navigator.getGamepads?navigator.getGamepads():[];if(padIdx!=null&&ps[padIdx])return ps[padIdx];for(const p of ps)if(p&&p.connected){padIdx=p.index;document.body.classList.add('pad');return p}return null}
 const TI={mx:0,my:0,cx:0,cy:0,flap:false,dive:false,brake:false,tap:{}};// touch input
 // desktop: pointer-lock mouse look, LMB flap, RMB dive, controller/keyboard hint
 if(!isTouch){const locked=()=>document.pointerLockElement===canvas;
- canvas.addEventListener('mousedown',e=>{auInit&&auInit();if(!locked()){try{canvas.requestPointerLock()}catch(_){}return}if(e.button===0)TI.flap=true;if(e.button===2)TI.dive=true});
+ canvas.addEventListener('mousedown',e=>{auInit&&auInit();if(!locked()){try{canvas.requestPointerLock()}catch(_){}return}if(e.button===0)TI.flap=true;if(e.button===2)TI.dive=true;if(e.button===1){e.preventDefault();TI.tap.lock=true}});
  addEventListener('mouseup',e=>{if(e.button===0)TI.flap=false;if(e.button===2)TI.dive=false});canvas.addEventListener('contextmenu',e=>e.preventDefault());
  addEventListener('mousemove',e=>{if(!locked())return;const k=.035*(SET.sens||1);TI.cx+=e.movementX*k;TI.cy+=e.movementY*k*(SET.invert?-1:1)});
  const hint=document.createElement('div');hint.id='ctlHint';document.body.appendChild(hint);
- const setHint=()=>{hint.innerHTML=document.body.classList.contains('pad')?'🎮 <b>Controller</b> · LS move · RS look · A flap · B land · X act · Y keen eye · RT dive · LT brake · Start pause':
-  '⌨ <b>WASD</b> move · <b>click</b> for mouse look · <b>Space/LMB</b> flap · <b>Shift/RMB</b> dive · <b>E</b> act · <b>Q</b> land · <b>R</b> ability · <b>M</b> map · <b>Esc</b> pause &nbsp;|&nbsp; 🎮 Xbox pad: <b>press any button</b> to connect'};
+ const setHint=()=>{hint.innerHTML=document.body.classList.contains('pad')?'🎮 <b>Controller</b> · LS move · RS look · A flap · B land · X act · Y keen eye · LB/RS-click lock prey · RT dive · LT brake · Start pause':
+  '⌨ <b>WASD</b> move · <b>click</b> for mouse look · <b>Space/LMB</b> flap · <b>Shift/RMB</b> dive · <b>Tab/MMB</b> lock prey · <b>E</b> act · <b>Q</b> land · <b>R</b> ability · <b>M</b> map · <b>Esc</b> pause &nbsp;|&nbsp; 🎮 Xbox pad: <b>press any button</b> to connect'};
  setHint();addEventListener('gamepadconnected',()=>{setHint();hint.classList.add('flash');setTimeout(()=>hint.classList.remove('flash'),1500)});addEventListener('gamepaddisconnected',()=>{document.body.classList.remove('pad');padIdx=null;setHint()});
  window.__setHint=setHint}
 const prevB={};let I={};
@@ -75,7 +75,7 @@ function readInput(){const p=padObj();const b=n=>!!(p&&p.buttons[n]&&p.buttons[n
  if(K.KeyJ)cx-=1;if(K.KeyL)cx+=1;if(K.KeyI)cy-=1;if(K.KeyK)cy+=1;
  mx+=TI.mx;my+=TI.my;cx+=TI.cx;cy+=TI.cy;TI.cx=0;TI.cy=0;
  const held={flap:b(0)||b(5)||K.Space||TI.flap,dive:bv(7)>.3||K.ShiftLeft||TI.dive,brake:bv(6)>.3||K.ControlLeft,land:b(1)||K.KeyQ,act:b(2)||K.KeyE,ab:b(3)||K.KeyR,pause:b(9)||K.Escape||K.KeyP,map:b(8)||K.KeyM,
-  up:b(12),down:b(13),left:b(14),right:b(15),lb:b(4),rb:b(5)};
+  up:b(12),down:b(13),left:b(14),right:b(15),lb:b(4),rb:b(5),lock:b(4)||b(11)||K.Tab};
  const n={mx:clamp(mx,-1,1),my:clamp(my,-1,1),cx,cy,diveV:Math.max(bv(7),held.dive?1:0),brakeV:bv(6)};
  for(const k in held){n[k]=held[k];n[k+'E']=held[k]&&!prevB[k];prevB[k]=held[k]}
  for(const k in TI.tap){if(TI.tap[k]){n[k+'E']=true;TI.tap[k]=false}}

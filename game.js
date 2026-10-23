@@ -8,36 +8,36 @@ const rnd=Math.random;const TAU=Math.PI*2;
 const gH=(x,z)=>Math.max(H(x,z),0); // surface incl. water
 // ---------- materials helpers
 const M=(c,o)=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.8},o||{}));
-function ell(r,sx,sy,sz,m){const e=new THREE.Mesh(new THREE.SphereGeometry(r,12,9),m);e.scale.set(sx,sy,sz);e.castShadow=true;return e}
+function ell(r,sx,sy,sz,m){const e=new THREE.Mesh(new THREE.SphereGeometry(r,24,18),m);e.scale.set(sx,sy,sz);e.castShadow=true;return e}
 // ---------- creature meshes
 function mkMouse(){const g=new THREE.Group(),m=M(0x6d625a);g.add(ell(.06,1,.8,1.6,m));const h=ell(.04,1,.9,1.2,m);h.position.set(0,.02,-.1);g.add(h);
- for(const s of[-1,1]){const e=ell(.02,1,1,.4,M(0xc9a09a));e.position.set(s*.03,.06,-.09);g.add(e)}const t=new THREE.Mesh(new THREE.CylinderGeometry(.005,.008,.16,4),M(0xb8968e));t.rotation.x=1.3;t.position.set(0,0,.15);g.add(t);g.position.y=.05;return g}
+ for(const s of[-1,1]){const e=ell(.02,1,1,.4,M(0xc9a09a));e.position.set(s*.03,.06,-.09);g.add(e)}const t=new THREE.Mesh(new THREE.CylinderGeometry(.005,.008,.16,8),M(0xb8968e));t.rotation.x=1.3;t.position.set(0,0,.15);g.add(t);g.position.y=.05;return g}
 function mkRabbit(){const g=new THREE.Group(),m=M(0x8a7258);const b=ell(.14,1,.9,1.4,m);b.position.y=.14;g.add(b);const h=ell(.08,1,1,1.2,m);h.position.set(0,.26,-.17);g.add(h);
  for(const s of[-1,1]){const e=ell(.025,1,4,.6,m);e.position.set(s*.035,.37,-.14);e.rotation.z=s*.2;g.add(e)}const t=ell(.04,1,1,1,M(0xeeeeee));t.position.set(0,.16,.19);g.add(t);return g}
 function mkCanid(wolf){const g=new THREE.Group(),c=wolf?0x5e5c58:0xb5561f,m=M(c),bm=M(wolf?0x8f8c86:0xece4d8),dk=M(0x1e1a18);const s=wolf?1.5:1;
  const body=ell(.2*s,1,1,2.3,m);body.position.y=.42*s;g.add(body);const bel=ell(.17*s,.9,.7,2,bm);bel.position.y=.36*s;g.add(bel);
- const head=new THREE.Group();head.position.set(0,.55*s,-.5*s);g.add(head);head.add(ell(.13*s,1,.9,1.1,m));const sn=new THREE.Mesh(new THREE.ConeGeometry(.07*s,.22*s,8),bm);sn.rotation.x=-Math.PI/2;sn.position.set(0,-.03*s,-.17*s);head.add(sn);
+ const head=new THREE.Group();head.position.set(0,.55*s,-.5*s);g.add(head);head.add(ell(.13*s,1,.9,1.1,m));const sn=new THREE.Mesh(new THREE.ConeGeometry(.07*s,.22*s,18),bm);sn.rotation.x=-Math.PI/2;sn.position.set(0,-.03*s,-.17*s);head.add(sn);
  const no=ell(.022*s,1,1,1,dk);no.position.set(0,-.02*s,-.28*s);head.add(no);
- for(const k of[-1,1]){const e=new THREE.Mesh(new THREE.ConeGeometry(.05*s,.14*s,4),m);e.position.set(k*.07*s,.13*s,.0);head.add(e);const ey=ell(.016*s,1,1,1,M(0xd8a030,{emissive:wolf?0x332200:0}));ey.position.set(k*.06*s,.03*s,-.1*s);head.add(ey)}
+ for(const k of[-1,1]){const e=new THREE.Mesh(new THREE.ConeGeometry(.05*s,.14*s,12),m);e.position.set(k*.07*s,.13*s,.0);head.add(e);const ey=ell(.016*s,1,1,1,M(0xd8a030,{emissive:wolf?0x332200:0}));ey.position.set(k*.06*s,.03*s,-.1*s);head.add(ey)}
  const tail=new THREE.Group();tail.position.set(0,.48*s,.42*s);g.add(tail);const tm=ell(.07*s,1,1,4,m);tm.position.z=.22*s;tm.rotation.x=.4;tail.add(tm);if(!wolf){const tt=ell(.05*s,1,1,1.5,bm);tt.position.set(0,-.08*s,.45*s);tail.add(tt)}
- const legs=[];for(const [x,z] of [[-.1,-.3],[.1,-.3],[-.1,.3],[.1,.3]]){const l=new THREE.Mesh(new THREE.CylinderGeometry(.03*s,.025*s,.36*s,5),dk);l.geometry.translate(0,-.18*s,0);l.position.set(x*s,.38*s,z*s);l.castShadow=true;g.add(l);legs.push(l)}
+ const legs=[];for(const [x,z] of [[-.1,-.3],[.1,-.3],[-.1,.3],[.1,.3]]){const l=new THREE.Mesh(new THREE.CylinderGeometry(.03*s,.025*s,.36*s,12),dk);l.geometry.translate(0,-.18*s,0);l.position.set(x*s,.38*s,z*s);l.castShadow=true;g.add(l);legs.push(l)}
  g.userData={legs,head,tail};return g}
 function mkSquirrel(){const g=new THREE.Group(),m=M(0x9a5a2e),pm=M(0xe0cfb0);const b=ell(.07,1,.95,1.5,m);b.position.y=.08;g.add(b);const be=ell(.055,.9,.7,1.2,pm);be.position.set(0,.06,-.01);g.add(be);
  const h=ell(.045,1,1,1.2,m);h.position.set(0,.14,-.09);g.add(h);for(const s of[-1,1]){const e=ell(.015,1,1.6,.6,m);e.position.set(s*.025,.19,-.08);g.add(e)}
  const t=ell(.06,1,2.6,1,m);t.position.set(0,.17,.12);t.rotation.x=-.35;g.add(t);g.userData.tail=t;return g}
-function mkFish(){const g=new THREE.Group();const m=M(0x8c9aa0,{metalness:.6,roughness:.3});g.add(ell(.1,.5,.8,2,m));const t=new THREE.Mesh(new THREE.ConeGeometry(.08,.14,4),m);t.rotation.x=Math.PI/2;t.position.z=.25;t.scale.x=.3;g.add(t);return g}
+function mkFish(){const g=new THREE.Group();const m=M(0x8c9aa0,{metalness:.6,roughness:.3});g.add(ell(.1,.5,.8,2,m));const t=new THREE.Mesh(new THREE.ConeGeometry(.08,.14,12),m);t.rotation.x=Math.PI/2;t.position.z=.25;t.scale.x=.3;g.add(t);return g}
 function mkSongbird(){const g=new THREE.Group(),m=M([0x7a5a3a,0x3a5a8a,0x9a8a3a][Math.floor(rnd()*3)]);g.add(ell(.05,1,.9,1.6,m));const h=ell(.035,1,1,1,m);h.position.set(0,.02,-.07);g.add(h);
  const wg=[];for(const s of[-1,1]){const w=new THREE.Mesh(new THREE.PlaneGeometry(.14,.06).translate(.07,0,0).rotateX(-Math.PI/2),M(0x4a3a2a,{side:THREE.DoubleSide}));w.scale.x=s;g.add(w);wg.push(w)}g.userData.w=wg;return g}
 function mkCarcass(){const g=new THREE.Group();const m=M(0x5b3a2a),bm=M(0xd8ceb8,{roughness:.6}),red=M(0x5e1414,{roughness:.5});const b=ell(.35,1,.55,2,m);b.position.y=.18;g.add(b);
- for(let i=0;i<5;i++){const r=new THREE.Mesh(new THREE.TorusGeometry(.26,.025,5,10,Math.PI),bm);r.position.set(0,.22,-.3+i*.14);r.rotation.y=Math.PI/2;g.add(r)}const f=ell(.2,1.2,.3,1.6,red);f.position.set(.1,.12,0);g.add(f);
- for(const [x,z,a] of[[.2,.5,.4],[-.2,.55,-.3],[.25,-.5,.2]]){const l=new THREE.Mesh(new THREE.CylinderGeometry(.03,.025,.6,5),m);l.rotation.z=1.4;l.rotation.y=a;l.position.set(x,.08,z);g.add(l)}return g}
+ for(let i=0;i<5;i++){const r=new THREE.Mesh(new THREE.TorusGeometry(.26,.025,8,20,Math.PI),bm);r.position.set(0,.22,-.3+i*.14);r.rotation.y=Math.PI/2;g.add(r)}const f=ell(.2,1.2,.3,1.6,red);f.position.set(.1,.12,0);g.add(f);
+ for(const [x,z,a] of[[.2,.5,.4],[-.2,.55,-.3],[.25,-.5,.2]]){const l=new THREE.Mesh(new THREE.CylinderGeometry(.03,.025,.6,12),m);l.rotation.z=1.4;l.rotation.y=a;l.position.set(x,.08,z);g.add(l)}return g}
 function mkShiny(){const g=new THREE.Group();const m=M(rnd()<.5?0xffd257:0xd8e0ea,{metalness:1,roughness:.18,emissive:0x221a00});const t=new THREE.Mesh(new THREE.TorusGeometry(.07,.022,8,16),m);t.rotation.x=1.3;g.add(t);
  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:glintTex(),color:0xfff1c0,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));sp.scale.set(.6,.6,.6);g.add(sp);g.userData.sp=sp;return g}
 let _gt=null;function glintTex(){if(_gt)return _gt;const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');const gr=x.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(.25,'rgba(255,230,160,.5)');gr.addColorStop(1,'rgba(255,200,100,0)');x.fillStyle=gr;x.fillRect(0,0,64,64);
  x.strokeStyle='rgba(255,255,255,.9)';x.lineWidth=2;x.beginPath();x.moveTo(32,2);x.lineTo(32,62);x.moveTo(2,32);x.lineTo(62,32);x.stroke();_gt=new THREE.CanvasTexture(c);return _gt}
 let _mk=null;function markTex(){if(_mk)return _mk;const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');x.strokeStyle='#ffcf4a';x.lineWidth=6;x.beginPath();x.arc(32,32,22,0,TAU);x.stroke();x.fillStyle='#ffcf4a';x.beginPath();x.arc(32,32,6,0,TAU);x.fill();_mk=new THREE.CanvasTexture(c);return _mk}
 // ---------- items (sticks / moss / shinies)
-const items=[];const twigG=new THREE.CylinderGeometry(.018,.026,.7,5).rotateZ(Math.PI/2),mossG=new THREE.IcosahedronGeometry(.22,1);
+const items=[];const twigG=new THREE.CylinderGeometry(.018,.026,.7,8).rotateZ(Math.PI/2),mossG=W.smoothN(new THREE.IcosahedronGeometry(.22,3));
 const twigM=new THREE.MeshStandardMaterial({map:W.T.bark,color:0x8a7a66,roughness:1}),mossM=new THREE.MeshStandardMaterial({map:W.T.moss,color:0x8fbf6a,roughness:1});
 const stickIM=new THREE.InstancedMesh(twigG,twigM,900),mossIM=new THREE.InstancedMesh(mossG,mossM,160);stickIM.castShadow=true;scene.add(stickIM,mossIM);
 {const r=W.rng(77);let tries=0;
@@ -79,7 +79,7 @@ function buildNestMesh(){while(nestG.children.length)nestG.remove(nestG.children
  if(u.lookout){for(let i=0;i<3;i++){const g=new THREE.CylinderGeometry(.04,.05,2.2*s,5);g.translate(.7*s+i*.05,1.1*s,(i-1)*.12);tw.push(g)}ring(.35*s,2.2*s,.08,26);}
  if(u.larder){for(let i=0;i<18;i++){const g=new THREE.CylinderGeometry(.02,.03,.6,4).rotateZ(Math.PI/2).rotateY(r()*3);g.translate(-.8*s+(r()-.5)*.3,r()*.15,.2+(r()-.5)*.3);tw.push(g)}}
  const mesh=new THREE.Mesh(W.mergeGeos(tw),new THREE.MeshStandardMaterial({map:W.T.bark,color:0x7a6a55,roughness:1}));mesh.castShadow=mesh.receiveShadow=true;nestG.add(mesh);
- if(u.lining){const l=new THREE.Mesh(new THREE.SphereGeometry(.42*s,14,8,0,TAU,Math.PI*.55,Math.PI*.45),new THREE.MeshStandardMaterial({map:W.T.moss,color:0xa0c080,side:THREE.DoubleSide,roughness:1}));l.position.y=.32*s;nestG.add(l)}
+ if(u.lining){const l=new THREE.Mesh(new THREE.SphereGeometry(.42*s,28,14,0,TAU,Math.PI*.55,Math.PI*.45),new THREE.MeshStandardMaterial({map:W.T.moss,color:0xa0c080,side:THREE.DoubleSide,roughness:1}));l.position.y=.32*s;nestG.add(l)}
  if(u.hoard){for(let i=0;i<5;i++){const m=mkShiny();m.position.set(Math.cos(i*1.3)*.3*s,.12,Math.sin(i*1.3)*.3*s);m.userData.sp.scale.setScalar(.35);nestG.add(m)}}
  nestG.position.set(n.x,n.y-.12,n.z)}
 const UPG=[
@@ -183,8 +183,8 @@ function flyTick(dt,I,sp){
  const sx=I.mx,sy=SET.invert?I.my:-I.my;const dive=I.diveV||0,brake=I.brakeV||0;
  const turn=sp.turn*(1.55-clamp(S.speed/60,0,.6));
  S.yaw-=sx*turn*dt;S.roll=lerp(S.roll,-sx*.85-(S.mode==='fly'?0:0),1-Math.exp(-dt*5));
- let pt=sy*.7;if(dive>0)pt=lerp(pt,-1.25,dive);if(brake>0)pt=Math.max(pt,.45*brake);
- S.pitch=lerp(S.pitch,pt,1-Math.exp(-dt*(dive?3.2:2.4)));
+ let pt=sy*.7;const hp=window.HUNT?HUNT.aim(I):null;if(hp!=null)pt=hp;else if(dive>0)pt=lerp(pt,-1.25,dive);if(brake>0)pt=Math.max(pt,.45*brake);
+ S.pitch=lerp(S.pitch,pt,1-Math.exp(-dt*(dive?3.2:2.4)));if(window.HUNT)HUNT.steer(dt,I);
  // flapping
  const wantFlap=I.flap&&S.stam>0;if(I.flapE&&S.stam>0)flapAcc=Math.max(flapAcc,.35);
  const flapping=wantFlap||flapAcc>0;flapAcc=Math.max(0,flapAcc-dt);
@@ -193,7 +193,7 @@ function flyTick(dt,I,sp){
   flapSnd-=dt;if(flapSnd<=0){SFX.flap();flapSnd=.32}}else flapSnd=0;
  // gravity along path, drag
  S.speed+=-9.8*Math.sin(S.pitch)*dt*.95;S.speed-=(.0075*S.speed*S.speed*(dive>.2?.25:1)+brake*7)*dt;
- const maxS=(dive>.2?sp.diveMax:28)*spd;S.speed=clamp(S.speed,2.5,maxS);
+ const maxS=(dive>.2?sp.diveMax*(window.HUNT?HUNT.boost():1):28)*spd;S.speed=clamp(S.speed,2.5,maxS);
  const sink=sp.glideSink+Math.max(0,8-S.speed)*.75;const th=thermalAt(S.x,S.z)*sp.thermal;
  if(!flapping&&dive<.2){S.stam=Math.min(maxSt(),S.stam+dt*(1.5+(S.sp==='hawk'?2.5+th*1.5:0)))}
  forward();
@@ -283,7 +283,7 @@ function doAct(c){const sp=SPECIES[S.sp];
  case 'grubs':{c.o.grubs=0;c.o.t=150;const v=10*diet('grubs');S.hunger=clamp(S.hunger+v,0,100);SFX.eat();S.flags=Object.assign(S.flags||{},{ate:1});toast('+'+Math.round(v)+' food');break}
  case 'pounce':catchPrey(c.o);break;
  case 'drink':S.thirst=clamp(S.thirst+30,0,100);SFX.drink();S.flags=Object.assign(S.flags||{},{drank:1});toast('+30 water');break}}
-function catchPrey(e){e.alive=false;scene.remove(e.mesh);const i=ents.indexOf(e);if(i>=0)ents.splice(i,1);const r=ROLE[e.type];
+function catchPrey(e){if(window.HUNT)HUNT.caught(e);e.alive=false;scene.remove(e.mesh);const i=ents.indexOf(e);if(i>=0)ents.splice(i,1);const r=ROLE[e.type];
  S.hold={type:e.type,food:r.food,name:({mouse:'mouse',rabbit:'rabbit',squirrel:'squirrel',fish:'fish',songbird:'songbird'})[e.type],x2:pwOn('talon')};S.stats.caught++;SFX.eat();B.rumble(.6,.3,180);toast('Caught a '+S.hold.name+'! Press ACT to eat.');
  while(held.children.length)held.remove(held.children[0]);const m=r.mk();held.add(m)}
 function arriveNest(){const st=S.nest.store;let d=0;for(const k of ['stick','moss','shiny']){st[k]+=S.inv[k];d+=S.inv[k];S.inv[k]=0}if(d)toast('Dropped off '+d+' item'+(d>1?'s':'')+' at the nest');save()}
@@ -298,7 +298,7 @@ const pwSpots=[];{const r=W.rng(4242);const L=[[W.RUINS.x+10,W.RUINS.z+8],[W.FAR
  let tries=0;while(L.length<26&&tries<4000){tries++;const x=(r()-.5)*1250,z=(r()-.5)*1250;const h=H(x,z);if(h<1.5||h>90||W.normalAt(x,z).y<.8)continue;if(L.some(q=>hyp(q[0]-x,q[1]-z)<110))continue;L.push([x,z])}
  const glow=(()=>{const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');const g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.3,'rgba(255,255,255,.45)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,64,64);return new THREE.CanvasTexture(c)})();
  L.forEach(([x,z],i)=>{const k=PWK[i%PWK.length];const d=PW[k];const g=new THREE.Group();const y=Math.max(H(x,z),0)+1.6;g.position.set(x,y,z);
-  const core=new THREE.Mesh(k==='gold'?new THREE.ConeGeometry(.16,.9,6):k==='berry'?new THREE.SphereGeometry(.3,14,10):k==='talon'?new THREE.TorusKnotGeometry(.2,.06,48,6):k==='thermal'?new THREE.TorusGeometry(.3,.09,10,24):new THREE.OctahedronGeometry(.36,0),
+  const core=new THREE.Mesh(k==='gold'?new THREE.ConeGeometry(.16,.9,16):k==='berry'?new THREE.SphereGeometry(.3,14,10):k==='talon'?new THREE.TorusKnotGeometry(.2,.06,48,6):k==='thermal'?new THREE.TorusGeometry(.3,.09,10,24):new THREE.OctahedronGeometry(.36,0),
    new THREE.MeshStandardMaterial({color:d.col,emissive:d.col,emissiveIntensity:1.6,metalness:.4,roughness:.3}));g.add(core);
   const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:glow,color:d.col,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:.9}));sp.scale.set(3.2,3.2,1);g.add(sp);
   const beam=new THREE.Mesh(new THREE.CylinderGeometry(.06,.5,40,8,1,true).translate(0,20,0),new THREE.MeshBasicMaterial({color:d.col,transparent:true,opacity:.13,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide}));g.add(beam);
@@ -353,6 +353,6 @@ function entTick(dt){popT-=dt;if(popT<=0){popT=4;populate(S.x,S.z)}
  if(show){for(const e of ents){if(mi>=marks.length)break;const crowMode=S.sp==='crow';if(crowMode)continue;if(!(e.type==='mouse'||e.type==='rabbit'||e.type==='squirrel'||e.type==='songbird'||e.type==='fish'))continue;if(!e.mesh.visible)continue;const d=hyp(e.x-S.x,e.z-S.z);if(d>140)continue;marks[mi].position.set(e.x,e.y+1.2,e.z);marks[mi].visible=true;mi++}
   if(S.sp==='crow')for(const it of items){if(mi>=marks.length)break;if(it.type==='shiny'&&it.alive&&hyp(it.x-S.x,it.z-S.z)<160){marks[mi].position.set(it.x,it.y+1.4,it.z);marks[mi].visible=true;mi++}}}
  for(;mi<marks.length;mi++)marks[mi].visible=false}
-window.__G={PW,PWK,pwSpots,pwOn,pwPick,pwVis,pwAlive,migrate,get S(){return S},set S(v){S=v},ents,items,newState,save,load,setBird,buildNestMesh,gameTick,startLanding,findPerch,catchPrey,doAct,UPG,costOf,nestCost,maxHp,maxSt,OBJ,isNight,skyAt,sunInfo,strike,respawn,die,
+window.__G={canTake,diet,PW,PWK,pwSpots,pwOn,pwPick,pwVis,pwAlive,migrate,get S(){return S},set S(v){S=v},ents,items,newState,save,load,setBird,buildNestMesh,gameTick,startLanding,findPerch,catchPrey,doAct,UPG,costOf,nestCost,maxHp,maxSt,OBJ,isNight,skyAt,sunInfo,strike,respawn,die,
  hurt,toast,prompt,refreshItems,populate,takeOff,atNest,nestPerch,get bird(){return bird},held,cam,rain,buildRain,marks,get ctx(){return ctx},set itemsDirty(v){itemsDirty=v},get itemsDirty(){return itemsDirty},get berriesDirty(){return berriesDirty},set berriesDirty(v){berriesDirty=v},stormFlashRef:()=>stormFlash,setStormFlash:v=>stormFlash=v,arriveNest};
 })();

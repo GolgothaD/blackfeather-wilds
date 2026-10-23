@@ -24,13 +24,14 @@ function mat(c,extra){return new THREE.MeshStandardMaterial(Object.assign({color
 const CC=new THREE.Color(),CD=new THREE.Color();
 function lin(h){return new THREE.Color(h)}
 // ---- low-level geometry builder: triangles with per-vertex colours and normals
+const BQ=(W.Q0&&W.Q0.detail)??2;
 function GB(){this.p=[];this.c=[];this.n=[];this.u=[]}
 GB.prototype.tri=function(a,b,c,ca,cb,cc,ua,ub,uc){this.u.push(...(ua||[0,0]),...(ub||[0,0]),...(uc||[0,0]));const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2],vx=c[0]-a[0],vy=c[1]-a[1],vz=c[2]-a[2];let nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx;const l=Math.hypot(nx,ny,nz)||1;nx/=l;ny/=l;nz/=l;
  this.p.push(...a,...b,...c);this.c.push(ca.r,ca.g,ca.b,cb.r,cb.g,cb.b,cc.r,cc.g,cc.b);for(let i=0;i<3;i++)this.n.push(nx,ny,nz)};
-GB.prototype.geo=function(){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(this.p,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(this.n,3));g.setAttribute('color',new THREE.Float32BufferAttribute(this.c,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(this.u,2));return g};
+GB.prototype.geo=function(){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(this.p,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(this.n,3));g.setAttribute('color',new THREE.Float32BufferAttribute(this.c,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(this.u,2));W.smoothN(g);return g};
 // one feather: lies in XZ, quill from origin toward +z, rotated by ang around Y, placed at (ox,oy,oz).
 // top face uses colours top/tip, underside uses under/underTip. mirror=-1 builds the left wing.
-function feather(gb,o){const {ox,oy,oz,len,wid,ang,mir,top,tip,under,utip,camber=.08,pointy=.25,twist=0}=o;const N=5;const L=[],Rr=[];
+function feather(gb,o){const {ox,oy,oz,len,wid,ang,mir,top,tip,under,utip,camber=.08,pointy=.25,twist=0}=o;const N=BQ>1?12:BQ>0?9:6;const L=[],Rr=[];
  const ca=Math.cos(ang),sa=Math.sin(ang);
  for(let i=0;i<=N;i++){const t=i/N;let w=wid*(t<.15?.55+t*3:1-Math.pow(Math.max(0,t-.55)/.45,1.7)*(1-pointy));w*=.5;
   const y=-camber*len*t*t;const tw=twist*t;
@@ -62,9 +63,9 @@ const FT=(function(){const mk=(w,h,fn)=>{const c=document.createElement('canvas'
   const sc=Math.max(0,1-r)*.6+.4;const shaft=Math.exp(-Math.pow(cu/.04,2))*(1-cv)*.15;const fine=.5+.5*Math.sin((cv*3+Math.abs(cu))*40);return .72+.2*sc+.06*fine+shaft});
  return {feather:fe,body:bo}})();
 // smooth deformed ellipsoid with colour function
-function blob(rx,ry,rz,colf,deform,ws,hs){const g=new THREE.SphereGeometry(1,ws||22,hs||16);g.rotateX(Math.PI/2);/* poles along z */const p=g.attributes.position;const col=new Float32Array(p.count*3);const c=new THREE.Color();
+function blob(rx,ry,rz,colf,deform,ws,hs){const g=new THREE.SphereGeometry(1,ws||[28,40,56][BQ],hs||[20,28,40][BQ]);g.rotateX(Math.PI/2);/* poles along z */const p=g.attributes.position;const col=new Float32Array(p.count*3);const c=new THREE.Color();
  for(let i=0;i<p.count;i++){let x=p.getX(i),y=p.getY(i),z=p.getZ(i);const d=deform?deform(x,y,z):[x,y,z];x=d[0];y=d[1];z=d[2];colf(c,x,y,z);col[i*3]=c.r;col[i*3+1]=c.g;col[i*3+2]=c.b;p.setXYZ(i,x*rx,y*ry,z*rz)}
- g.setAttribute('color',new THREE.BufferAttribute(col,3));g.computeVertexNormals();return g}
+ g.setAttribute("color",new THREE.BufferAttribute(col,3));g.computeVertexNormals();W.smoothN(g);return g}
 const SM=(a,b,x)=>{let t=(x-a)/(b-a);t=t<0?0:t>1?1:t;return t*t*(3-2*t)};
 // per-species plumage palette
 function palette(id){const C=SPECIES[id].colors,P={back:lin(C.body),belly:lin(C.belly),wing:lin(C.wing),head:lin(C.head),tail:lin(C.tail),beak:lin(C.beak),eye:lin(C.eye)};
@@ -94,7 +95,7 @@ function wingParts(id,P,mir){const owl=id==='owl',fal=id==='falcon',eag=id==='ea
  for(let i=0;i<6;i++){const t=i/5;feather(hand,{ox:t*Hn*.3,oy:.012,oz:-chord*.22,len:chord*.5,wid:chord*.24,ang:.2+t*.9,mir,top:P.covert,tip:P.wing,under:P.under,utip:P.under,camber:.03,pointy:.6})}
  const ga=arm.geo(),gh=hand.geo();
  // leading edge (patagium)
- const le=new THREE.CylinderGeometry(chord*.075,chord*.1,A+.02,7,1).rotateZ(Math.PI/2).translate(mir*A/2,.008,-chord*.2);const le2=new THREE.CylinderGeometry(chord*.04,chord*.07,Hn*.36,6,1).rotateZ(Math.PI/2).translate(mir*Hn*.18,.006,-chord*.16);
+ const le=new THREE.CylinderGeometry(chord*.075,chord*.1,A+.02,18,2).rotateZ(Math.PI/2).translate(mir*A/2,.008,-chord*.2);const le2=new THREE.CylinderGeometry(chord*.04,chord*.07,Hn*.36,14,2).rotateZ(Math.PI/2).translate(mir*Hn*.18,.006,-chord*.16);
  [le,le2].forEach(g=>{const n=g.attributes.position.count,c=new Float32Array(n*3);for(let i=0;i<n;i++){c[i*3]=P.covert.r;c[i*3+1]=P.covert.g;c[i*3+2]=P.covert.b}g.setAttribute('color',new THREE.BufferAttribute(c,3));g.deleteAttribute('uv')});
  return {arm:merge([ga,le.toNonIndexed()]),hand:merge([gh,le2.toNonIndexed()]),A,Hn,chord}}
 function merge(list){let n=0;list.forEach(g=>n+=g.attributes.position.count);const P=new Float32Array(n*3),N=new Float32Array(n*3),C=new Float32Array(n*3);let o=0;
@@ -125,20 +126,20 @@ function makeBird(id){
    if(fal){const hood=SM(-.35,.2,y);c.copy(lin(0xdcd6cc)).lerp(P.head,hood);if(Math.abs(x)>.55&&y<.25&&y>-.8&&z<.3)c.copy(P.head)}
    if(hawk&&y<-.3)c.lerp(P.belly,.7);if(owl){const face=SM(-.2,-.75,z);c.lerp(lin(0xb08e66),face);if(face>.2&&Math.hypot(x,y+.05)>.82)c.copy(lin(0x2a2018));if(y<-.55&&z<-.3)c.copy(lin(0xf0eadc))}
    if(eag)c.copy(P.head)},(x,y,z)=>[x,y,z<0?z*(1+.12*(y>0?0:1)):z]),M);head.add(hm);
- if(crow||hawk||eag||fal){const brow=new THREE.Mesh(new THREE.BoxGeometry(hr*1.75,hr*.18,hr*.5),mat(P.head.getHex(),sheen));brow.position.set(0,hr*.42,-hr*.55);brow.rotation.x=.18;head.add(brow)}
+ if(crow||hawk||eag||fal){const brow=new THREE.Mesh(new THREE.SphereGeometry(1,28,16).scale(hr*.9,hr*.1,hr*.28),mat(P.head.getHex(),sheen));brow.position.set(0,hr*.42,-hr*.55);brow.rotation.x=.18;head.add(brow)}
  // beak: tapered, raptors hooked, crow long and stout
  const bl=owl?.06:crow?.16:eag?.15:.1,bw=owl?.032:crow?.042:eag?.05:.038;
- {const bg=new THREE.CylinderGeometry(.001,bw,bl,10,6);bg.translate(0,bl/2,0);bg.rotateX(-Math.PI/2);const p=bg.attributes.position;const hook=crow?.15:owl?.8:1.1;
+ {const bg=new THREE.CylinderGeometry(.001,bw,bl,24,10);bg.translate(0,bl/2,0);bg.rotateX(-Math.PI/2);const p=bg.attributes.position;const hook=crow?.15:owl?.8:1.1;
   for(let i=0;i<p.count;i++){const z=p.getZ(i);const t=Math.max(0,Math.min(1,-z/bl));let y=p.getY(i);y*=crow?.95:1.25;y-=hook*bl*.55*Math.pow(t,2.4);if(y>0)y*=1+(1-t)*.25;p.setY(i,y)}bg.computeVertexNormals();
   const bk=new THREE.Mesh(bg,mat(C.beak,{roughness:.35}));bk.position.set(0,owl?-.03:-.02,-hr*(owl?.86:.95));head.add(bk);
-  if(!crow){const cere=new THREE.Mesh(new THREE.CylinderGeometry(bw*1.05,bw*1.1,bl*.22,10).rotateX(Math.PI/2),mat(eag?0xe8b52a:owl?0x3a3028:0xe2b53c,{roughness:.6}));cere.position.set(0,owl?-.025:-.012,-hr*.98);head.add(cere)}
-  if(crow){const br=new THREE.Mesh(new THREE.ConeGeometry(bw*.95,bl*.35,8).rotateX(-Math.PI/2),M);br.position.set(0,-.012,-hr*.98);head.add(br)}}
+  if(!crow){const cere=new THREE.Mesh(new THREE.CylinderGeometry(bw*1.05,bw*1.1,bl*.22,24).rotateX(Math.PI/2),mat(eag?0xe8b52a:owl?0x3a3028:0xe2b53c,{roughness:.6}));cere.position.set(0,owl?-.025:-.012,-hr*.98);head.add(cere)}
+  if(crow){const br=new THREE.Mesh(new THREE.ConeGeometry(bw*.95,bl*.35,20).rotateX(-Math.PI/2),M);br.position.set(0,-.012,-hr*.98);head.add(br)}}
  // eyes
  const er=owl?.034:.019;const em=mat(C.eye,{roughness:.08,metalness:.1,emissive:owl?0x442200:0});
- for(const s of [-1,1]){const e=new THREE.Mesh(new THREE.SphereGeometry(er,12,10),em);const ex=owl?.06:hr*.72,ez=owl?-hr*.82:-hr*.45;e.position.set(s*ex,owl?.02:hr*.18,ez);head.add(e);
-  const pu=new THREE.Mesh(new THREE.SphereGeometry(er*.55,10,8),mat(0x030303,{roughness:.05}));pu.position.set(s*(ex+(owl?0:er*.45)),e.position.y,ez-(owl?er*.62:er*.3));head.add(pu);
+ for(const s of [-1,1]){const e=new THREE.Mesh(new THREE.SphereGeometry(er,24,18),em);const ex=owl?.06:hr*.72,ez=owl?-hr*.82:-hr*.45;e.position.set(s*ex,owl?.02:hr*.18,ez);head.add(e);
+  const pu=new THREE.Mesh(new THREE.SphereGeometry(er*.55,20,14),mat(0x030303,{roughness:.05}));pu.position.set(s*(ex+(owl?0:er*.45)),e.position.y,ez-(owl?er*.62:er*.3));head.add(pu);
   if(fal||hawk||eag){const ring=new THREE.Mesh(new THREE.TorusGeometry(er*1.05,er*.25,6,12),mat(fal?0xe8c040:0x6a5a40));ring.position.copy(e.position);ring.rotation.y=Math.PI/2*s*.9;head.add(ring)}}
- if(owl){for(const s of [-1,1]){const tf=new THREE.Mesh(new THREE.ConeGeometry(.032,.12,5).translate(0,.06,0),M.clone());tf.material=mat(0x4a3a28);tf.position.set(s*.085,.11,-.02);tf.rotation.set(-.2,0,-s*.38);head.add(tf)}}
+ if(owl){for(const s of [-1,1]){const tf=new THREE.Mesh(new THREE.ConeGeometry(.032,.12,14,3).translate(0,.06,0),M.clone());tf.material=mat(0x4a3a28);tf.position.set(s*.085,.11,-.02);tf.rotation.set(-.2,0,-s*.38);head.add(tf)}}
  // tail fan
  const tg=new THREE.Group();tg.position.set(0,.02,owl?.26:.33);body.add(tg);const tm=new THREE.Mesh(tailGeo(id,P),FM);tg.add(tm);
  // wings: shoulder -> arm feathers ; wrist -> hand (primaries)
@@ -148,11 +149,11 @@ function makeBird(id){
   wings.push({sh,wr,s,side:sh,A:wp.A,chord:wp.chord})}
  // legs + talons
  const legs=new THREE.Group();body.add(legs);const lm=mat(P.leg.getHex(),{roughness:.55}),km=mat(0x141210,{roughness:.3});
- for(const s of [-1,1]){const thigh=new THREE.Mesh(new THREE.SphereGeometry(owl?.06:.045,8,6),M);thigh.scale.set(1,1.4,1.1);thigh.position.set(s*.07,-.13,.02);legs.add(thigh);
-  const l=new THREE.Mesh(new THREE.CylinderGeometry(owl?.022:.012,owl?.026:.016,.13,6),owl?mat(0xbaa27e):lm);l.position.set(s*.07,-.21,.02);legs.add(l);
+ for(const s of [-1,1]){const thigh=new THREE.Mesh(new THREE.SphereGeometry(owl?.06:.045,20,14),M);thigh.scale.set(1,1.4,1.1);thigh.position.set(s*.07,-.13,.02);legs.add(thigh);
+  const l=new THREE.Mesh(new THREE.CylinderGeometry(owl?.022:.012,owl?.026:.016,.13,12),owl?mat(0xbaa27e):lm);l.position.set(s*.07,-.21,.02);legs.add(l);
   for(const [a,len] of [[-.45,.075],[0,.085],[.45,.07],[Math.PI,.05]]){const t=new THREE.Group();t.position.set(s*.07,-.272,.02);t.rotation.y=a;legs.add(t);
-   const toe=new THREE.Mesh(new THREE.CylinderGeometry(.006,.009,len,5).rotateX(Math.PI/2).translate(0,0,-len/2),lm);t.add(toe);
-   const cl=new THREE.Mesh(new THREE.ConeGeometry(.007,.035,5).rotateX(-Math.PI/2-.8).translate(0,-.008,-len-.01),km);t.add(cl)}}
+   const toe=new THREE.Mesh(new THREE.CylinderGeometry(.006,.009,len,10).rotateX(Math.PI/2).translate(0,0,-len/2),lm);t.add(toe);
+   const cl=new THREE.Mesh(new THREE.ConeGeometry(.007,.035,10).rotateX(-Math.PI/2-.8).translate(0,-.008,-len-.01),km);t.add(cl)}}
  g.traverse(o=>{if(o.isMesh){o.castShadow=true}});
  g.scale.setScalar(sp.size*1.25);
  g.userData={body,head,wings,tail:tg,legs,phase:Math.random()*6,fold:1,flap:0,tuck:0,id,hop:0};

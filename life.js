@@ -4,7 +4,7 @@
 const B=window.__BFW,{scene,camera,SET}=B;const H=W.H;const TAU=Math.PI*2,rnd=Math.random,hyp=Math.hypot,clamp=(v,a,b)=>v<a?a:v>b?b:v,lerp=(a,b,t)=>a+(b-a)*t;
 const G=()=>window.__G;let DENS=B.getQ().life||.75;
 const M=(c,o)=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.85},o||{}));
-function ellG(r,sx,sy,sz,x,y,z){const g=new THREE.SphereGeometry(r,10,7);g.scale(sx,sy,sz);g.translate(x||0,y||0,z||0);return g}
+function ellG(r,sx,sy,sz,x,y,z){const g=new THREE.SphereGeometry(r,22,16);g.scale(sx,sy,sz);g.translate(x||0,y||0,z||0);return g}
 const night=()=>{const S=G()&&G().S;return S?(S.t<.23||S.t>.78):false},storm=()=>{const S=G()&&G().S;return S?S.storm:0};
 const meadow=(x,z)=>{const h=H(x,z);return h>1.5&&h<60&&W.normalAt(x,z).y>.86&&W.forestMask(x,z)<.56};
 const P=new THREE.Vector3(),Q=new THREE.Quaternion(),Sc=new THREE.Vector3(),Mx=new THREE.Matrix4(),E=new THREE.Euler(0,0,0,'YXZ'),C=new THREE.Color();
@@ -12,15 +12,15 @@ function player(){const S=G()&&G().S;if(S)return S;return {x:camera.position.x,y
 // ================= deer herds
 function mkDeer(stag){const g=new THREE.Group();const coat=M(0x8a5a36),pale=M(0xd9c7a8),dk=M(0x2a1e16);
  const parts=[ellG(.32,1,1,2.1,0,1.05,0),ellG(.13,1,1.1,1,0,1.45,-.62),ellG(.1,1,.95,1.6,0,1.62,-.78)];
- const neck=new THREE.CylinderGeometry(.09,.13,.55,7);neck.rotateX(-.75);neck.translate(0,1.3,-.48);parts.push(neck);
- for(const s of[-1,1]){const e=new THREE.ConeGeometry(.05,.18,5);e.rotateZ(s*1.1);e.translate(s*.11,1.75,-.7);parts.push(e)}
+ const neck=new THREE.CylinderGeometry(.09,.13,.55,16,3);neck.rotateX(-.75);neck.translate(0,1.3,-.48);parts.push(neck);
+ for(const s of[-1,1]){const e=new THREE.ConeGeometry(.05,.18,12);e.rotateZ(s*1.1);e.translate(s*.11,1.75,-.7);parts.push(e)}
  const body=new THREE.Mesh(W.mergeGeos(parts),coat);body.castShadow=true;g.add(body);
  const belly=new THREE.Mesh(ellG(.25,.9,.6,1.7,0,.92,0),pale);g.add(belly);const tail=new THREE.Mesh(ellG(.06,1,1.4,.6,0,1.15,.66),pale);g.add(tail);
  const nose=new THREE.Mesh(ellG(.035,1,1,1,0,1.6,-.94),dk);g.add(nose);
- if(stag){const an=[];for(const s of[-1,1]){const a=new THREE.CylinderGeometry(.015,.025,.5,4);a.rotateZ(s*.5);a.rotateX(.3);a.translate(s*.15,1.95,-.68);an.push(a);
-   for(let k=0;k<3;k++){const t=new THREE.CylinderGeometry(.01,.016,.22,4);t.rotateX(-.6);t.translate(s*(.12+k*.06),1.86+k*.11,-.74);an.push(t)}}
+ if(stag){const an=[];for(const s of[-1,1]){const a=new THREE.CylinderGeometry(.015,.025,.5,8);a.rotateZ(s*.5);a.rotateX(.3);a.translate(s*.15,1.95,-.68);an.push(a);
+   for(let k=0;k<3;k++){const t=new THREE.CylinderGeometry(.01,.016,.22,8);t.rotateX(-.6);t.translate(s*(.12+k*.06),1.86+k*.11,-.74);an.push(t)}}
   g.add(new THREE.Mesh(W.mergeGeos(an),M(0xcbb898)))}
- const legs=[];for(const [x,z] of [[-.13,-.45],[.13,-.45],[-.13,.45],[.13,.45]]){const l=new THREE.Mesh(new THREE.CylinderGeometry(.04,.025,.9,5).translate(0,-.45,0),coat);l.position.set(x,.92,z);g.add(l);legs.push(l)}
+ const legs=[];for(const [x,z] of [[-.13,-.45],[.13,-.45],[-.13,.45],[.13,.45]]){const l=new THREE.Mesh(new THREE.CylinderGeometry(.04,.025,.9,12,3).translate(0,-.45,0),coat);l.position.set(x,.92,z);g.add(l);legs.push(l)}
  g.userData.legs=legs;return g}
 const herds=[];
 function placeHerd(h,px,pz){for(let k=0;k<40;k++){const a=rnd()*TAU,d=35+rnd()*95;const x=px+Math.cos(a)*d,z=pz+Math.sin(a)*d;if(Math.abs(x)>680||Math.abs(z)>680)continue;if(meadow(x,z)){h.x=x;h.z=z;h.tx=x;h.tz=z;

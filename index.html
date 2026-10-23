@@ -41,6 +41,7 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 #bDive{width:74px;height:74px;right:112px;bottom:0;background:rgba(200,160,40,.5)}
 #bLand{width:74px;height:74px;right:14px;bottom:114px;background:rgba(200,60,50,.5)}
 #bAct{width:74px;height:74px;right:112px;bottom:84px;background:rgba(50,110,220,.5)}#bAct.hot{box-shadow:0 0 0 3px #8fc0ff,0 0 18px #6aa8ff}
+#bLock{width:58px;height:58px;right:196px;bottom:96px;background:rgba(220,70,60,.45)}#bLock.on{box-shadow:0 0 0 3px #ff8a7a,0 0 16px #ff5a4a}
 #bAb{width:62px;height:62px;right:118px;bottom:166px;background:rgba(220,190,40,.45)}#bAb.cd{background:conic-gradient(rgba(0,0,0,.6) calc(var(--cd)*360deg),rgba(220,190,40,.45) 0)}
 .portrait #btns{transform:scale(.86);transform-origin:bottom right}.portrait.lefty #btns{transform-origin:bottom left}
 .portrait #meters{width:52vw}.portrait #clock{left:auto;right:calc(12px + env(safe-area-inset-right));transform:none;top:calc(128px + env(safe-area-inset-top))}.portrait #alt{top:calc(154px + env(safe-area-inset-top))}.portrait .tb{top:calc(176px + env(safe-area-inset-top))}.portrait #toast{top:calc(200px + env(safe-area-inset-top))}
@@ -81,7 +82,7 @@ h1{font:700 clamp(30px,8vw,46px)/1.05 Georgia,serif;margin:0 0 4px;letter-spacin
 <div id="toast" class="hud"></div><div id="prompt" class="hud"></div><div id="hurt"></div><div id="fade"></div>
 <div class="tb" id="tMap">🗺</div><div class="tb" id="tPause">❚❚</div>
 <div id="stick"><div id="knob"></div></div>
-<div id="btns"><div class="b" id="bFlap" data-b="flap"><span>A</span><small>Flap</small></div><div class="b" id="bDive" data-b="dive"><span>RT</span><small>Dive</small></div><div class="b" id="bLand" data-b="land"><span>B</span><small>Land</small></div><div class="b" id="bAct" data-b="act"><span>X</span><small>Act</small></div><div class="b" id="bAb" data-b="ab"><span>Y</span><small>Skill</small></div></div>
+<div id="btns"><div class="b" id="bFlap" data-b="flap"><span>A</span><small>Flap</small></div><div class="b" id="bDive" data-b="dive"><span>RT</span><small>Dive</small></div><div class="b" id="bLand" data-b="land"><span>B</span><small>Land</small></div><div class="b" id="bAct" data-b="act"><span>X</span><small>Act</small></div><div class="b" id="bAb" data-b="ab"><span>Y</span><small>Skill</small></div><div class="b" id="bLock" data-b="lock"><span>◎</span><small>Lock</small></div></div>
 <div class="panel" id="p-title"><div class="card"><h1>Blackfeather<br>Wilds</h1><p class="sub">Fly. Hunt. Drink. Build. Survive.</p>
  <button class="btn pri" id="bCont">Continue</button><button class="btn" id="bNew">New Game</button><button class="btn" id="bHow">How to Play</button><button class="btn" id="bSettings">Settings</button>
  <div class="feather">Xbox controller supported · Add to Home screen to install</div></div></div>
@@ -101,5 +102,5 @@ h1{font:700 clamp(30px,8vw,46px)/1.05 Georgia,serif;margin:0 0 4px;letter-spacin
 <div class="panel" id="p-map"><div class="card"><canvas id="mapC" width="600" height="600"></canvas><button class="btn pri" id="bMapBack" data-back>Close map</button></div></div>
 <div class="panel" id="p-dead"><div class="card"><h2>You have fallen</h2><p class="sub" id="deadMsg"></p><button class="btn pri" id="bRespawn">Wake up in your nest</button><button class="btn" id="bDeadNew">Start a new life</button></div></div>
 <script>if(('ontouchstart' in window)||navigator.maxTouchPoints>0)document.body.classList.add('touch')</script>
-<script src="vendor/three.min.js"></script><script src="world.js"></script><script src="bird.js"></script><script src="main.js"></script><script src="bloom.js"></script><script src="life.js"></script><script src="biomes.js"></script><script src="game.js"></script><script src="ui.js"></script>
+<script src="vendor/three.min.js"></script><script src="vendor/three-addons.js"></script><script src="world.js"></script><script src="bird.js"></script><script src="main.js"></script><script src="bloom.js"></script><script src="life.js"></script><script src="biomes.js"></script><script src="game.js"></script><script src="hunt.js"></script><script src="ui.js"></script>
 </body></html>
