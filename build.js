@@ -259,12 +259,12 @@ function autoStore(quiet){const S=ST(),st=stash();let d=0;for(const k of KEYS){c
 function spatial(L,i,dx,dy){const a=L[i];if(!a)return i;const ra=a.getBoundingClientRect(),ax=ra.left+ra.width/2,ay=ra.top+ra.height/2;let best=-1,bd=1e9;
  L.forEach((b,j)=>{if(j===i)return;const r=b.getBoundingClientRect(),x=r.left+r.width/2-ax,y=r.top+r.height/2-ay;const p=dx?x*dx:y*dy;if(p<=4)return;const o=dx?Math.abs(y):Math.abs(x);const s=p+o*2.2;if(s<bd){bd=s;best=j}});return best<0?i:best}
 function panelInput(panel,I,L,fi){if(panel==='build'){
-  if(I.buildE){window.showPanel(null);return true}if(I.invE){openInv();return true}
+  if(I.buildE){window.showPanel(null);I.buildE=I.invE=I.mapE=I.pauseE=false;return true}if(I.invE){openInv();return true}
   const sw=I.lbE||I.rbE?(I.rbE?1:-1):I.leftN?-1:I.rightN?1:0;if(I.lockE&&!I.lbE)return false;
   if(sw){tab=TABS[(TABS.indexOf(tab)+sw+TABS.length)%TABS.length];sfx('nav');renderBuild();return true}
   if(I.upN||I.downN){const j=spatial(L,fi,0,I.downN?1:-1);window.__setFocusI(j===fi?(I.downN?(fi+1)%L.length:(fi+L.length-1)%L.length):j);sfx('nav');return true}
   return false}
- if(panel==='inv'){if(I.invE){window.showPanel(null);return true}if(I.buildE){openBuild();return true}
+ if(panel==='inv'){if(I.invE){window.showPanel(null);I.buildE=I.invE=I.mapE=I.pauseE=false;return true}if(I.buildE){openBuild();return true}
   if(I.actE){drop1();return true}if(I.abE){discard();return true}
   if(I.upN||I.downN||I.leftN||I.rightN){const j=spatial(L,fi,I.leftN?-1:I.rightN?1:0,I.upN?-1:I.downN?1:0);if(j!==fi){window.__setFocusI(j);sfx('nav');descFromFocus()}return true}
   return false}
